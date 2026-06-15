@@ -52,7 +52,8 @@ def image_to_text(path: Path) -> str:
             {"type": "text", "text": "Extrae el texto visible de este documento legal. No inventes contenido."},
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
         ])
-        return llm.invoke([message]).content
+        content = llm.invoke([message]).content
+        return content if isinstance(content, str) else str(content)
     print(f"  [MOCK] Imagen leida: {path.name} ({len(img_b64) // 1024} KB base64)")
     if path.name == "contrato_original.png":
         return (

@@ -22,7 +22,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
@@ -88,7 +88,9 @@ def choose_tool_version(query: str) -> dict[str, Any]:
             return "ok"
 
         msg = ChatOpenAI(model=MODEL_NAME, temperature=0).bind_tools([transferir_fondos_v1, transferir_fondos_v2]).invoke(query)
-        return msg.tool_calls[0] if msg.tool_calls else {"name": "sin_tool", "args": {}}
+        if not msg.tool_calls:
+            return {"name": "sin_tool", "args": {}}
+        return cast(dict[str, Any], msg.tool_calls[0])
     print("  [MOCK] Simulando eleccion de version por LangChain...")
     return {"name": "transferir_fondos_v2", "args": {"monto": 1000.0, "cuenta_destino": "CBU-123", "moneda": "ARS"}}
 
@@ -111,7 +113,7 @@ def main() -> None:
     payload_viejo = {"monto": "1000", "cuenta_destino": "CBU-123"}
     print(f"Payload de cliente viejo: {payload_viejo}")
     try:
-        TransferV2(**payload_viejo)
+        TransferV2.model_validate(payload_viejo)
     except ValidationError as exc:
         print("Cliente roto al validar contra v2:")
         print(exc)

@@ -20,12 +20,14 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+if callable(reconfigure_stdout):
+    reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
@@ -266,14 +268,14 @@ def build_evaluation_report(
             ),
         ])
         chain = prompt | structured_llm
-        return chain.invoke({
+        return cast(ASREvaluation, chain.invoke({
             "reference": reference,
             "hypothesis": hypothesis,
             "wer": wer_val,
             "s": s, "d": d, "ins": i,
             "is_crit": is_crit,
             "expl": expl,
-        })
+        }))
     else:
         domain_risk = "critical" if is_crit else (
             "low" if wer_val <= 0.05 else

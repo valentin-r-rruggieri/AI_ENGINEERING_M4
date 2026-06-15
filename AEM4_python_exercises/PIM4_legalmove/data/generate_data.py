@@ -23,7 +23,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 EXPECTED_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def get_font(size: int) -> ImageFont.FreeTypeFont:
+def get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     paths = [
         "C:/Windows/Fonts/arial.ttf",
         "C:/Windows/Fonts/calibri.ttf",

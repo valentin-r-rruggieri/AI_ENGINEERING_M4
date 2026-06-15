@@ -23,13 +23,15 @@ import subprocess
 import sys
 from pathlib import Path
 from datetime import date
-from typing import Optional, Literal
+from typing import Optional, Literal, cast
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+if callable(reconfigure_stdout):
+    reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
@@ -180,7 +182,7 @@ def extract_from_image(image_path: Path) -> dict:
             },
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
         ])
-        result = structured_llm.invoke([message])
+        result = cast(BankApplicationWithConfidence, structured_llm.invoke([message]))
         return result.model_dump()
     else:
         print(f"  [MOCK] {image_name} leído ({image_path.stat().st_size // 1024} KB)")

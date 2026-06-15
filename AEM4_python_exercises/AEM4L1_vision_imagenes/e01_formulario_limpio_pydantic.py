@@ -23,12 +23,14 @@ import subprocess
 import sys
 from pathlib import Path
 from datetime import date
-from typing import Optional
+from typing import Optional, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+if callable(reconfigure_stdout):
+    reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
@@ -101,7 +103,7 @@ def basic_extraction_free_text(image_path: Path) -> str:
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
         ])
         response = llm.invoke([message])
-        return response.content
+        return response.content if isinstance(response.content, str) else str(response.content)
     else:
         # MOCK — simula lo que devolvería el modelo sin instrucciones de formato
         return (
@@ -209,7 +211,7 @@ def structured_extraction(image_path: Path) -> BankApplication:
         ])
 
         # LangChain hace la llamada y valida el output contra BankApplication
-        return structured_llm.invoke([message])
+        return cast(BankApplication, structured_llm.invoke([message]))
 
     else:
         # MOCK: imagen leída, respuesta simulada
@@ -243,12 +245,12 @@ print()
 
 print("Caso 1: el modelo extrae monto negativo (alucinación):")
 try:
-    BankApplication(
-        full_name="Test User",
-        document_number="12345678",
-        requested_amount=-5000.0,  # ← el modelo inventó un número negativo
-        signature_present=True,
-    )
+    BankApplication.model_validate({
+        "full_name": "Test User",
+        "document_number": "12345678",
+        "requested_amount": -5000.0,  # ← el modelo inventó un número negativo
+        "signature_present": True,
+    })
 except ValidationError as e:
     for err in e.errors():
         print(f"  Campo '{err['loc'][0]}': {err['msg']}")
@@ -256,12 +258,12 @@ except ValidationError as e:
 print()
 print("Caso 2: el modelo devuelve el monto como string:")
 try:
-    BankApplication(
-        full_name="Test User",
-        document_number="12345678",
-        requested_amount="cincuenta mil",  # type: ignore
-        signature_present=True,
-    )
+    BankApplication.model_validate({
+        "full_name": "Test User",
+        "document_number": "12345678",
+        "requested_amount": "cincuenta mil",
+        "signature_present": True,
+    })
 except ValidationError as e:
     for err in e.errors():
         print(f"  Campo '{err['loc'][0]}': {err['msg']}")

@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
@@ -38,10 +38,13 @@ def ensure_data() -> None:
     run_generator(DATA_DIR, "generate_data.py", PROFILES_PATH)
 
 
+Decision = Literal["LoRA", "Full Fine-Tuning", "Hybrid"]
+
+
 class ArchitectureDecisionRecord(BaseModel):
     title: str
     context: str
-    decision: Literal["LoRA", "Full Fine-Tuning", "Hybrid"]
+    decision: Decision
     rationale: str = Field(..., min_length=30)
     consequences_positive: list[str] = Field(..., min_length=1)
     consequences_negative: list[str] = Field(..., min_length=1)
@@ -55,7 +58,7 @@ def storage_lora(model_gb: float, adapter_gb: float, clients: int) -> float:
     return model_gb + adapter_gb * clients
 
 
-def decide_profile(profile: dict) -> str:
+def decide_profile(profile: dict) -> Decision:
     if len(profile["dominios"]) == 1 and profile["presupuesto"] == "alto" and profile["trafico"] == "estable_alto":
         return "Full Fine-Tuning"
     if profile["trafico"] == "picos" and profile["presupuesto"] == "alto":
@@ -73,7 +76,7 @@ def generate_adr(profile: dict) -> ArchitectureDecisionRecord:
             ("user", "Perfil: {profile}"),
         ])
         chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ArchitectureDecisionRecord)
-        return chain.invoke({"profile": profile})
+        return cast(ArchitectureDecisionRecord, chain.invoke({"profile": profile}))
     decision = decide_profile(profile)
     return ArchitectureDecisionRecord(
         title=f"Adaptacion de modelo para {profile['cliente']}",
@@ -118,14 +121,14 @@ def main() -> None:
 
     print_section(5, "VALIDACION")
     try:
-        ArchitectureDecisionRecord(
-            title="ADR malo",
-            context="sin contexto",
-            decision="Prompting",
-            rationale="corto",
-            consequences_positive=[],
-            consequences_negative=[],
-        )
+        ArchitectureDecisionRecord.model_validate({
+            "title": "ADR malo",
+            "context": "sin contexto",
+            "decision": "Prompting",
+            "rationale": "corto",
+            "consequences_positive": [],
+            "consequences_negative": [],
+        })
     except ValidationError as exc:
         print("Pydantic rechaza decision fuera de Literal y rationale corto:")
         print(exc)

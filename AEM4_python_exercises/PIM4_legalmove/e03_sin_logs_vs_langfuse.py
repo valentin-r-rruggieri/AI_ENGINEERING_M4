@@ -109,7 +109,8 @@ def parse_image(path: Path) -> str:
             {"type": "text", "text": "Extrae texto de este documento legal."},
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
         ])
-        return ChatOpenAI(model=VISION_MODEL, temperature=0).invoke([msg]).content
+        content = ChatOpenAI(model=VISION_MODEL, temperature=0).invoke([msg]).content
+        return content if isinstance(content, str) else str(content)
     if path.name == "contrato_original.png":
         return "Contrato original: payment_terms $1.000; duration 12 meses; service_territory Argentina."
     return "Adenda compleja: payment_terms $1.500; duration 24 meses; service_territory Argentina Uruguay Paraguay."

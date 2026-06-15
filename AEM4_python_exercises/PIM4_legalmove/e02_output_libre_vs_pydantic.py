@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -66,7 +66,7 @@ def structured_extraction(expected: dict) -> ContractChangeOutput:
             ("user", "Caso complejo LegalMove. Devolve los tres campos requeridos."),
         ])
         chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ContractChangeOutput)
-        return chain.invoke({})
+        return cast(ContractChangeOutput, chain.invoke({}))
     print("  [MOCK] Simulando structured output de LangChain...")
     return ContractChangeOutput(**expected)
 

@@ -27,7 +27,9 @@ from typing import Optional, Literal
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+if callable(reconfigure_stdout):
+    reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
@@ -234,7 +236,8 @@ def safe_extraction_honest(image_path: Path) -> BankApplicationWithConfidence:
             },
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
         ])
-        return structured_llm.invoke([message])
+        response = structured_llm.invoke([message])
+        return BankApplicationWithConfidence.model_validate(response)
 
     else:
         print(f"  [MOCK] Leyendo {image_path.name} ({image_path.stat().st_size // 1024} KB)...")

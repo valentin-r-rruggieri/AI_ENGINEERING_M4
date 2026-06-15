@@ -20,7 +20,7 @@ OUTPUT_DIR = Path(__file__).parent
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def get_font(size: int) -> ImageFont.FreeTypeFont:
+def get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Obtiene una fuente escalable. Intenta varias rutas de sistema."""
     font_paths = [
         "C:/Windows/Fonts/arial.ttf",

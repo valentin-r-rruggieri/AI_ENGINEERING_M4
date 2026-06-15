@@ -24,7 +24,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
@@ -110,7 +110,9 @@ def langchain_tool_call(user_query: str) -> dict[str, Any]:
 
         llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
         msg = llm.bind_tools([buscar_producto_tool, consultar_precio_tool]).invoke(user_query)
-        return msg.tool_calls[0] if msg.tool_calls else {"name": "sin_tool", "args": {}}
+        if not msg.tool_calls:
+            return {"name": "sin_tool", "args": {}}
+        return cast(dict[str, Any], msg.tool_calls[0])
 
     print("  [MOCK] Simulando AIMessage.tool_calls de LangChain...")
     return {"name": "buscar_producto", "args": {"query": "auriculares", "limit": 5}}
@@ -162,7 +164,7 @@ def main() -> None:
 
     print_section(5, "VALIDACION")
     try:
-        BuscarProductoArgs(query="auriculares", limit="cinco")
+        BuscarProductoArgs.model_validate({"query": "auriculares", "limit": "cinco"})
     except ValidationError as exc:
         print("Pydantic rechaza limit no entero:")
         print(exc)

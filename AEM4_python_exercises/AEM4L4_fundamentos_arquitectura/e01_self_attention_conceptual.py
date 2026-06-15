@@ -18,7 +18,7 @@ import math
 import os
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, cast
 
 import numpy as np
 from dotenv import load_dotenv
@@ -105,7 +105,7 @@ def extract_dependencies(sentence: str) -> DependencyMap:
             ("user", "{sentence}"),
         ])
         chain = prompt | llm.with_structured_output(_DependencyMap)
-        return chain.invoke({"sentence": sentence})
+        return cast(DependencyMap, chain.invoke({"sentence": sentence}))
     if "hipertension" in sentence.lower():
         return DependencyMap(sentence=sentence, links=[
             AttentionLink(token="hipertension", attends_to="losartan", reason="tratamiento indicado"),
@@ -150,7 +150,7 @@ def main() -> None:
     print_section(5, "VALIDACION")
     print(f"Suma de filas softmax: {[round(x, 4) for x in attn.sum(axis=1)]}")
     try:
-        DependencyMap(sentence=sentence, links=[{"token": "banco", "attends_to": "parque"}])
+        DependencyMap.model_validate({"sentence": sentence, "links": [{"token": "banco", "attends_to": "parque"}]})
     except ValidationError as exc:
         print("Pydantic rechaza link sin reason:")
         print(exc)

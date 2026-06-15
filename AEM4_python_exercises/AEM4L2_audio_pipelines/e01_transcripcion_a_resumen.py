@@ -20,12 +20,14 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Literal
+from typing import List, Literal, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+if callable(reconfigure_stdout):
+    reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
@@ -203,7 +205,7 @@ def summarize_call(transcript: str) -> SupportCallSummary:
         ])
 
         chain = prompt | structured_llm
-        return chain.invoke({"transcript": transcript})
+        return cast(SupportCallSummary, chain.invoke({"transcript": transcript}))
 
     else:
         # MOCK — simula lo que devolvería el modelo

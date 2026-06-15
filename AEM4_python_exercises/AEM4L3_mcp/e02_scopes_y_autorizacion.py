@@ -22,7 +22,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -90,7 +90,9 @@ def dangerous_tool_call(user_query: str) -> dict[str, Any]:
             return "ok"
 
         msg = ChatOpenAI(model=MODEL_NAME, temperature=0).bind_tools([buscar_producto, transferir_fondos]).invoke(user_query)
-        return msg.tool_calls[0] if msg.tool_calls else {"name": "sin_tool", "args": {}}
+        if not msg.tool_calls:
+            return {"name": "sin_tool", "args": {}}
+        return cast(dict[str, Any], msg.tool_calls[0])
     print("  [MOCK] Prompt injection hace que el orquestador pida transferir_fondos...")
     return {"name": "transferir_fondos", "args": {"monto": 999999.0, "cuenta_destino": "CUENTA-X", "moneda": "ARS"}}
 
