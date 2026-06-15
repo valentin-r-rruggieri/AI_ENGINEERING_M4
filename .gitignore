@@ -1,2 +1,5 @@
 GUION_*.md
 .claude
+.venv/
+__pycache__/
+*.py[cod]
