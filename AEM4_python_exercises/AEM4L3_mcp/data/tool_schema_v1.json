@@ -1,0 +1,14 @@
+{
+  "name": "transferir_fondos",
+  "version": "1.0.0",
+  "input_schema": {
+    "monto": {
+      "type": "string",
+      "required": true
+    },
+    "cuenta_destino": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

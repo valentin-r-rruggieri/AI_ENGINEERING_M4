@@ -1,0 +1,1 @@
+En la reunión de hoy acordamos que el sprint termina el viernes los tres puntos principales son primero revisar los pull requests pendientes segundo actualizar la documentación de la API tercero coordinar con el equipo de diseño los nuevos mockups para el dashboard

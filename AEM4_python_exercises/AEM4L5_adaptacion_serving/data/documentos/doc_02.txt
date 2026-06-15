@@ -1,0 +1,1 @@
+Ticket 102: usuario pide resumen de contrato de alquiler con foco en plazo y rescicion.

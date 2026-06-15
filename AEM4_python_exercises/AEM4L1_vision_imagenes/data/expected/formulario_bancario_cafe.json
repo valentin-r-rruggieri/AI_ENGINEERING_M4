@@ -1,0 +1,10 @@
+{
+  "full_name": "Juan Pérez",
+  "document_number": null,
+  "requested_amount": 50000.0,
+  "birth_date": null,
+  "signature_present": true,
+  "confidence": "medium",
+  "extraction_notes": "Mancha de café cubre el campo DNI y fecha de nacimiento. No es posible leerlos con certeza.",
+  "requires_human_review": true
+}

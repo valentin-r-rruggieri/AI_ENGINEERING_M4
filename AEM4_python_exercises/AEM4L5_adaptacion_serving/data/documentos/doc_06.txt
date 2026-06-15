@@ -1,0 +1,1 @@
+Ticket 106: cliente solicita extraccion de action items desde minutas de reuniones semanales.

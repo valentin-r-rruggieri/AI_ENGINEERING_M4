@@ -1,0 +1,68 @@
+[
+  {
+    "name": "buscar_producto",
+    "description": "Busca productos por nombre, SKU o categoria.",
+    "input_schema": {
+      "query": "string",
+      "limit": "integer opcional"
+    },
+    "output_schema": {
+      "results": "list[producto]"
+    },
+    "required_scope": "catalogo:producto:leer"
+  },
+  {
+    "name": "consultar_precio",
+    "description": "Consulta precio y stock de un SKU.",
+    "input_schema": {
+      "sku": "string"
+    },
+    "output_schema": {
+      "sku": "string",
+      "precio": "number",
+      "stock": "integer"
+    },
+    "required_scope": "catalogo:precio:leer"
+  },
+  {
+    "name": "crear_pedido",
+    "description": "Crea un pedido para un cliente.",
+    "input_schema": {
+      "sku": "string",
+      "cantidad": "integer",
+      "cliente_id": "string"
+    },
+    "output_schema": {
+      "pedido_id": "string",
+      "status": "string"
+    },
+    "required_scope": "ventas:pedido:crear"
+  },
+  {
+    "name": "actualizar_salario",
+    "description": "Actualiza salario de un empleado.",
+    "input_schema": {
+      "empleado_id": "string",
+      "nuevo_salario": "number"
+    },
+    "output_schema": {
+      "empleado_id": "string",
+      "status": "string"
+    },
+    "required_scope": "rrhh:salario:actualizar"
+  },
+  {
+    "name": "transferir_fondos",
+    "description": "Transfiere fondos entre cuentas.",
+    "input_schema": {
+      "monto": "number",
+      "cuenta_destino": "string",
+      "moneda": "string"
+    },
+    "output_schema": {
+      "transferencia_id": "string",
+      "status": "string"
+    },
+    "required_scope": "banco:fondos:transferir"
+  }
+]

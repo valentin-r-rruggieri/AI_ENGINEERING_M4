@@ -1,0 +1,1 @@
+Ticket 103: equipo comercial reporta error intermitente al generar propuestas en PDF.

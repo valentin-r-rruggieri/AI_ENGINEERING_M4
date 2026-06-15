@@ -1,0 +1,17 @@
+{
+  "viewer": [
+    "catalogo:producto:leer",
+    "catalogo:precio:leer"
+  ],
+  "operator": [
+    "catalogo:producto:leer",
+    "catalogo:precio:leer",
+    "ventas:pedido:*"
+  ],
+  "admin": [
+    "catalogo:*:*",
+    "ventas:*:*",
+    "rrhh:*:*",
+    "banco:*:*"
+  ]
+}

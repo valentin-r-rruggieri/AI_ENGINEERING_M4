@@ -1,0 +1,10 @@
+{
+  "full_name": null,
+  "document_number": null,
+  "requested_amount": null,
+  "birth_date": null,
+  "signature_present": null,
+  "confidence": "low",
+  "extraction_notes": "Imagen de muy baja calidad o muy borrosa. No es posible extraer información con confianza suficiente.",
+  "requires_human_review": true
+}

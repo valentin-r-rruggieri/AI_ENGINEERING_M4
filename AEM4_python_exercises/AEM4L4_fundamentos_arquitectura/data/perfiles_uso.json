@@ -1,0 +1,37 @@
+[
+  {
+    "cliente": "legal_enterprise",
+    "dominios": [
+      "legal"
+    ],
+    "presupuesto": "alto",
+    "trafico": "estable_alto"
+  },
+  {
+    "cliente": "multi_tenant_saas",
+    "dominios": [
+      "legal",
+      "finanzas",
+      "rrhh"
+    ],
+    "presupuesto": "medio",
+    "trafico": "variable"
+  },
+  {
+    "cliente": "startup_medica",
+    "dominios": [
+      "medicina"
+    ],
+    "presupuesto": "bajo",
+    "trafico": "bajo"
+  },
+  {
+    "cliente": "plataforma_regional",
+    "dominios": [
+      "legal",
+      "compliance"
+    ],
+    "presupuesto": "alto",
+    "trafico": "picos"
+  }
+]

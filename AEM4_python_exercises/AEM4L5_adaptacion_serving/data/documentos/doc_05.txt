@@ -1,0 +1,1 @@
+Ticket 105: soporte detecta picos de latencia durante procesamiento nocturno de contratos.

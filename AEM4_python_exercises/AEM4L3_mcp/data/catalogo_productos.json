@@ -1,0 +1,58 @@
+[
+  {
+    "sku": "AUD-100",
+    "nombre": "Auriculares Bluetooth Pro",
+    "categoria": "audio",
+    "precio": 89000,
+    "stock": 12
+  },
+  {
+    "sku": "AUD-200",
+    "nombre": "Auriculares Cableados Studio",
+    "categoria": "audio",
+    "precio": 32000,
+    "stock": 34
+  },
+  {
+    "sku": "TEC-010",
+    "nombre": "Teclado Mecanico Compacto",
+    "categoria": "perifericos",
+    "precio": 76000,
+    "stock": 8
+  },
+  {
+    "sku": "MOU-020",
+    "nombre": "Mouse Ergonomico Vertical",
+    "categoria": "perifericos",
+    "precio": 41000,
+    "stock": 19
+  },
+  {
+    "sku": "MON-144",
+    "nombre": "Monitor 27 pulgadas 144Hz",
+    "categoria": "monitores",
+    "precio": 310000,
+    "stock": 5
+  },
+  {
+    "sku": "CAM-030",
+    "nombre": "Webcam Full HD",
+    "categoria": "video",
+    "precio": 52000,
+    "stock": 15
+  },
+  {
+    "sku": "DOC-001",
+    "nombre": "Dock USB C Empresarial",
+    "categoria": "conectividad",
+    "precio": 118000,
+    "stock": 7
+  },
+  {
+    "sku": "MIC-050",
+    "nombre": "Microfono Condenser USB",
+    "categoria": "audio",
+    "precio": 99000,
+    "stock": 4
+  }
+]
