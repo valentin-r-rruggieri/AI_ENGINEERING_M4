@@ -11,10 +11,6 @@ Flujo:
     -> ejecucion basica sin gate
     -> ejecucion con authorize(tool, role)
 
-USE_REAL_API = False:
-    Lee JSON real y simula el tool_call peligroso.
-USE_REAL_API = True:
-    Usa ChatOpenAI.bind_tools() para obtener el tool_call.
 """
 
 from __future__ import annotations
@@ -29,15 +25,15 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 TOOLS_PATH = DATA_DIR / "tools_registry.json"
@@ -79,26 +75,23 @@ def authorize(tool_name: str, active_role: str, registry: list[dict[str, Any]], 
 
 
 def dangerous_tool_call(user_query: str) -> dict[str, Any]:
-    if USE_REAL_API:
-        from langchain_core.tools import tool
-        from langchain_openai import ChatOpenAI
+    from langchain_core.tools import tool
+    from langchain_openai import ChatOpenAI
 
-        @tool
-        def buscar_producto(query: str) -> str:
-            """Busca productos."""
-            return "ok"
+    @tool
+    def buscar_producto(query: str) -> str:
+        """Busca productos."""
+        return "ok"
 
-        @tool
-        def transferir_fondos(monto: float, cuenta_destino: str, moneda: str) -> str:
-            """Transfiere fondos."""
-            return "ok"
+    @tool
+    def transferir_fondos(monto: float, cuenta_destino: str, moneda: str) -> str:
+        """Transfiere fondos."""
+        return "ok"
 
-        msg = ChatOpenAI(model=MODEL_NAME, temperature=0).bind_tools([buscar_producto, transferir_fondos]).invoke(user_query)
-        if not msg.tool_calls:
-            return {"name": "sin_tool", "args": {}}
-        return cast(dict[str, Any], msg.tool_calls[0])
-    print("  [MOCK] Prompt injection hace que el orquestador pida transferir_fondos...")
-    return {"name": "transferir_fondos", "args": {"monto": 999999.0, "cuenta_destino": "CUENTA-X", "moneda": "ARS"}}
+    msg = ChatOpenAI(model=MODEL_NAME, temperature=0).bind_tools([buscar_producto, transferir_fondos]).invoke(user_query)
+    if not msg.tool_calls:
+        return {"name": "sin_tool", "args": {}}
+    return cast(dict[str, Any], msg.tool_calls[0])
 
 
 def execute_without_gate(tool_call: dict[str, Any]) -> dict[str, Any]:

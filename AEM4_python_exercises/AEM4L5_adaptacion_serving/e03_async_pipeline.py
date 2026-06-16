@@ -5,10 +5,6 @@ AEM4L5 | Arquitecturas avanzadas de adaptacion y serving
 Objetivo pedagogico:
     Mostrar que N llamadas I/O-bound al LLM no deberian ejecutarse en serie.
 
-USE_REAL_API = False:
-    Lee documentos reales y usa asyncio.sleep para simular latencia.
-USE_REAL_API = True:
-    Usa chain.abatch() de LangChain.
 """
 
 from __future__ import annotations
@@ -24,15 +20,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, preview, read_text, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, preview, read_text, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 DOCS_DIR = DATA_DIR / "documentos"
@@ -49,14 +45,13 @@ class AsyncSummary(BaseModel):
 
 
 def summarize_sync(doc_id: str, text: str) -> AsyncSummary:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([("system", "Resumi breve."), ("user", "{texto}")])
-        summary = (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"texto": text})
-        return AsyncSummary(doc_id=doc_id, summary=summary)
+    prompt = ChatPromptTemplate.from_messages([("system", "Resumi breve."), ("user", "{texto}")])
+    summary = (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"texto": text})
+    return AsyncSummary(doc_id=doc_id, summary=summary)
     time.sleep(0.5)
     return AsyncSummary(doc_id=doc_id, summary=f"Resumen: {preview(text, 70)}")
 
@@ -67,15 +62,14 @@ async def summarize_async_mock(doc_id: str, text: str) -> AsyncSummary:
 
 
 async def summarize_async(docs: list[tuple[str, str]]) -> list[AsyncSummary]:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([("system", "Resumi breve."), ("user", "{texto}")])
-        chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()
-        raw = await chain.abatch([{"texto": text} for _, text in docs])
-        return [AsyncSummary(doc_id=doc_id, summary=summary) for (doc_id, _), summary in zip(docs, raw)]
+    prompt = ChatPromptTemplate.from_messages([("system", "Resumi breve."), ("user", "{texto}")])
+    chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()
+    raw = await chain.abatch([{"texto": text} for _, text in docs])
+    return [AsyncSummary(doc_id=doc_id, summary=summary) for (doc_id, _), summary in zip(docs, raw)]
     return await asyncio.gather(*[summarize_async_mock(doc_id, text) for doc_id, text in docs])
 
 

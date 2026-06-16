@@ -5,10 +5,6 @@ AEM4L5 | Arquitecturas avanzadas de adaptacion y serving
 Objetivo pedagogico:
     Separar CPU-bound de I/O-bound en un pipeline de texto + resumen LLM.
 
-USE_REAL_API = False:
-    Lee texto largo real y simula latencia de LLM.
-USE_REAL_API = True:
-    Usa LangChain para el resumen.
 """
 
 from __future__ import annotations
@@ -26,15 +22,15 @@ from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 TEXT_PATH = DATA_DIR / "texto_largo.txt"
@@ -45,18 +41,15 @@ def ensure_data() -> None:
 
 
 def summarize_llm(text: str) -> str:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Resumi el texto en una frase."),
-            ("user", "{texto}"),
-        ])
-        return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"texto": text[:4000]})
-    time.sleep(0.15)
-    return "Resumen mock del texto procesado."
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Resumi el texto en una frase."),
+        ("user", "{texto}"),
+    ])
+    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"texto": text[:4000]})
 
 
 def regex_lento(text: str) -> dict[str, int]:

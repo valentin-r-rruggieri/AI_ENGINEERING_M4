@@ -6,10 +6,6 @@ Objetivo pedagogico:
     Comparar storage/costo entre full fine-tuning y LoRA, y convertir la
     decision en un Architecture Decision Record validado.
 
-USE_REAL_API = False:
-    Lee perfiles reales y devuelve ADRs mock calibrados.
-USE_REAL_API = True:
-    Usa LangChain structured output para generar ADRs.
 """
 
 from __future__ import annotations
@@ -24,15 +20,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 PROFILES_PATH = DATA_DIR / "perfiles_uso.json"
@@ -71,16 +67,15 @@ def decide_profile(profile: dict) -> Decision:
 
 
 def generate_adr(profile: dict) -> ArchitectureDecisionRecord:
-    if USE_REAL_API:
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Sos arquitecto ML. Genera un ADR breve y estructurado para adaptar un LLM."),
-            ("user", "Perfil: {profile}"),
-        ])
-        chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ArchitectureDecisionRecord)
-        return cast(ArchitectureDecisionRecord, chain.invoke({"profile": profile}))
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Sos arquitecto ML. Genera un ADR breve y estructurado para adaptar un LLM."),
+        ("user", "Perfil: {profile}"),
+    ])
+    chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ArchitectureDecisionRecord)
+    return cast(ArchitectureDecisionRecord, chain.invoke({"profile": profile}))
     decision = decide_profile(profile)
     return ArchitectureDecisionRecord(
         title=f"Adaptacion de modelo para {profile['cliente']}",

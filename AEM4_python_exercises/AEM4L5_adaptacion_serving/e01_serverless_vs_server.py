@@ -5,10 +5,6 @@ AEM4L5 | Arquitecturas avanzadas de adaptacion y serving
 Objetivo pedagogico:
     Medir cold start vs warm requests y decidir infraestructura con evidencia.
 
-USE_REAL_API = False:
-    Lee documentos reales y mockea el resumen.
-USE_REAL_API = True:
-    Resume con LangChain ChatOpenAI.
 """
 
 from __future__ import annotations
@@ -23,15 +19,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, preview, read_text, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, preview, read_text, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 DOCS_DIR = DATA_DIR / "documentos"
@@ -52,17 +48,16 @@ class SummaryResponse(BaseModel):
 
 
 def summarize_text(text: str) -> str:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Resumi el documento en una o dos oraciones accionables."),
-            ("user", "{texto}"),
-        ])
-        chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()
-        return chain.invoke({"texto": text})
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Resumi el documento en una o dos oraciones accionables."),
+        ("user", "{texto}"),
+    ])
+    chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()
+    return chain.invoke({"texto": text})
     time.sleep(0.12)
     return f"Resumen: {preview(text, 90)}"
 
@@ -72,7 +67,7 @@ def summarize_service(doc_id: str, text: str) -> SummaryResponse:
     cold = not _MODEL_LOADED
     start = time.perf_counter()
     if cold:
-        print("  [MOCK] Cold start: cargando modelo/chain...")
+        print("  Cold start: inicializando modelo/chain...")
         time.sleep(COLD_START_S)
         _MODEL_LOADED = True
     summary = summarize_text(text)

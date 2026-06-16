@@ -1,5 +1,5 @@
 """
-E02 — Formulario manchado con café: confianza y revisión humana
+E04 — Formulario manchado con café: confianza y revisión humana
 AEM4L1 | Visión e Imágenes
 
 Objetivo pedagógico:
@@ -12,8 +12,6 @@ Flujo:
     →  structured_output(BankApplicationWithConfidence)
     →  model_validator verifica coherencia de requires_human_review
 
-USE_REAL_API = False → lee la imagen real + mock honesto (reporta None en campos tapados)
-USE_REAL_API = True  → envía la imagen manchada a GPT-4o-mini → respuesta real
 """
 
 import os
@@ -29,12 +27,19 @@ from typing import Optional, Literal
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
+# Mantiene UTF-8 en la terminal para que las trazas en español sean legibles.
 reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
 if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
+# Carga la API key y el modelo desde .env.
 load_dotenv()
 
+# Este ejercicio necesita el comportamiento real del modelo ante una imagen dañada.
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI.")
+
+# Permite silenciar salida al validar el archivo sin cambiar el código.
 QUIET = "--quiet" in sys.argv
 
 
@@ -44,12 +49,12 @@ def print(*args, **kwargs):  # type: ignore[no-untyped-def]
 
 
 def trace(role: str, payload: str) -> None:
+    # Las trazas muestran el flujo real: prompt, salida del modelo y decisión.
     if not QUIET:
         builtins.print(f"{role}:")
         builtins.print(payload)
         builtins.print()
 
-USE_REAL_API   = False
 MODEL_NAME     = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
 DATA_DIR       = Path(__file__).parent / "data"
 IMAGE_CAFE     = DATA_DIR / "formulario_bancario_cafe.png"
@@ -57,6 +62,7 @@ IMAGE_LIMPIO   = DATA_DIR / "formulario_bancario_limpio.png"
 
 
 def ensure_data() -> None:
+    # La imagen con café se genera localmente si todavía no existe.
     if not IMAGE_CAFE.exists():
         print("Imágenes no encontradas. Generando...")
         subprocess.run([sys.executable, str(DATA_DIR / "generate_images.py")], check=True)
@@ -70,11 +76,11 @@ ensure_data()
 # ============================================================
 
 print("=" * 60)
-print("AEM4L1 | E02 — Formulario manchado con café")
+print("AEM4L1 | E04 — Formulario manchado con café")
 print("=" * 60)
 print(f"""
 CASO:
-  El mismo formulario del E01, pero llegó con manchas de café.
+  El mismo formulario base, pero llegó con manchas de café.
   Las manchas cubren el campo DNI y la fecha de nacimiento.
 
   Imagen de entrada: {IMAGE_CAFE.name}
@@ -91,6 +97,7 @@ print()
 
 
 def encode_image_to_base64(path: Path) -> str:
+    # Convertimos la imagen dañada a base64 para enviarla como data URL.
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
 
@@ -101,35 +108,24 @@ def bad_extraction_confabulates(image_path: Path) -> dict:
     """
     img_b64 = encode_image_to_base64(image_path)
 
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.messages import HumanMessage
-        from langchain_core.output_parsers import JsonOutputParser
+    # Primer prompt: exige completar todo, por eso sirve para observar si el
+    # modelo inventa campos que no puede leer.
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
+    from langchain_core.output_parsers import JsonOutputParser
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        # Sin instrucciones de incertidumbre → el modelo rellena todo
-        message = HumanMessage(content=[
-            {
-                "type": "text",
-                "text": "Extraé TODOS los datos del formulario bancario. Devolvé JSON con: full_name, document_number, requested_amount, birth_date, signature_present."
-            },
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ])
-        parser = JsonOutputParser()
-        chain = llm | parser
-        return chain.invoke([message])
-    else:
-        print(f"  [MOCK] Leyendo {image_path.name} ({image_path.stat().st_size // 1024} KB)...")
-        # El modelo CONFABULA: rellena campos que no podía leer
-        return {
-            "full_name": "Juan Pérez",
-            "document_number": "40111222",   # ← campo cubierto por café → INVENTADO
-            "requested_amount": 50000.0,
-            "birth_date": "1994-05-12",      # ← campo cubierto por café → INVENTADO
-            "signature_present": True,
-        }
-
-
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    # Sin instrucciones de incertidumbre → el modelo rellena todo
+    message = HumanMessage(content=[
+        {
+            "type": "text",
+            "text": "Extraé TODOS los datos del formulario bancario. Devolvé JSON con: full_name, document_number, requested_amount, birth_date, signature_present."
+        },
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+    ])
+    parser = JsonOutputParser()
+    chain = llm | parser
+    return chain.invoke([message])
 resultado_malo = bad_extraction_confabulates(IMAGE_CAFE)
 trace(
     "USER",
@@ -194,6 +190,9 @@ class BankApplicationWithConfidence(BaseModel):
     """
     full_name: Optional[str] = None
     document_number: Optional[str] = None
+
+    # Los campos críticos son Optional para que el modelo pueda decir "no legible"
+    # en vez de inventar un valor.
     requested_amount: Optional[float] = Field(None, gt=0)
     birth_date: Optional[date] = None
     signature_present: Optional[bool] = None
@@ -215,6 +214,8 @@ class BankApplicationWithConfidence(BaseModel):
         requires_human_review DEBE ser True.
         Esto previene que el modelo omita la bandera de revisión.
         """
+        # Esta validación cruza varios campos: por eso vive en model_validator
+        # y no en un Field individual.
         campos_criticos_nulos = any([
             self.full_name is None,
             self.document_number is None,
@@ -236,49 +237,29 @@ def safe_extraction_honest(image_path: Path) -> BankApplicationWithConfidence:
     """
     img_b64 = encode_image_to_base64(image_path)
 
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.messages import HumanMessage
+    # Segundo prompt: ahora la instrucción premia reportar incertidumbre.
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        structured_llm = llm.with_structured_output(BankApplicationWithConfidence)
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    structured_llm = llm.with_structured_output(BankApplicationWithConfidence)
 
-        message = HumanMessage(content=[
-            {
-                "type": "text",
-                "text": (
-                    "Analizá este formulario bancario. "
-                    "Si algún campo está cubierto, borroso o no es legible, devolvé null para ese campo. "
-                    "Indicá tu nivel de confianza ('low'/'medium'/'high') sobre la extracción completa. "
-                    "En extraction_notes describí qué campos no pudiste leer y por qué. "
-                    "Si confidence es 'low' o 'medium', o algún campo crítico es null, "
-                    "requires_human_review debe ser true."
-                ),
-            },
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ])
-        response = structured_llm.invoke([message])
-        return BankApplicationWithConfidence.model_validate(response)
-
-    else:
-        print(f"  [MOCK] Leyendo {image_path.name} ({image_path.stat().st_size // 1024} KB)...")
-        print("  [MOCK] Simulando respuesta honesta de GPT-4o-mini...")
-        # El modelo ahora reporta honestamente lo que no puede leer
-        return BankApplicationWithConfidence(
-            full_name="Juan Pérez",
-            document_number=None,       # ← campo tapado → None
-            requested_amount=50000.0,
-            birth_date=None,            # ← campo tapado → None
-            signature_present=True,
-            confidence="medium",
-            extraction_notes=(
-                "El campo 'número de documento' está cubierto por una mancha de café. "
-                "El campo 'fecha de nacimiento' también está parcialmente cubierto. "
-                "No es posible leerlos con certeza."
+    message = HumanMessage(content=[
+        {
+            "type": "text",
+            "text": (
+                "Analizá este formulario bancario. "
+                "Si algún campo está cubierto, borroso o no es legible, devolvé null para ese campo. "
+                "Indicá tu nivel de confianza ('low'/'medium'/'high') sobre la extracción completa. "
+                "En extraction_notes describí qué campos no pudiste leer y por qué. "
+                "Si confidence es 'low' o 'medium', o algún campo crítico es null, "
+                "requires_human_review debe ser true."
             ),
-            requires_human_review=True,
-        )
-
+        },
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+    ])
+    response = structured_llm.invoke([message])
+    return BankApplicationWithConfidence.model_validate(response)
 
 print()
 app_segura = safe_extraction_honest(IMAGE_CAFE)
@@ -313,6 +294,7 @@ CRITICAL_FIELDS = ["full_name", "document_number", "requested_amount"]
 
 def route_application(app: BankApplicationWithConfidence) -> tuple[str, str]:
     """Decide si la solicitud va a procesamiento automático o revisión humana."""
+    # Este paso conecta la extracción del LLM con una decisión de negocio.
     if app.requires_human_review:
         missing = [f for f in CRITICAL_FIELDS if getattr(app, f) is None]
         reason = f"Confianza: {app.confidence}"

@@ -6,10 +6,6 @@ Objetivo pedagogico:
     Mostrar que sin spans no se sabe donde fallo el pipeline, y que una traza
     por etapa localiza parsing, contextualizacion, extraccion o validacion.
 
-USE_REAL_API = False:
-    Lee imagenes/golden reales y mockea respuestas LLM.
-USE_REAL_API = True:
-    Usa LangChain para vision y agentes.
 USE_REAL_LANGFUSE = False:
     Mantiene trace local. Si se activa, se pueden pasar callbacks Langfuse.
 """
@@ -28,15 +24,15 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 USE_REAL_LANGFUSE = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 VISION_MODEL = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
@@ -121,46 +117,43 @@ class ContractChangeOutput(BaseModel):
 
 def parse_image(path: Path) -> str:
     img_b64 = image_to_base64(path)
-    if USE_REAL_API:
-        from langchain_core.messages import HumanMessage
-        from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
+    from langchain_openai import ChatOpenAI
 
-        msg = HumanMessage(content=[
-            {"type": "text", "text": "Extrae texto de este documento legal."},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ])
-        content = ChatOpenAI(model=VISION_MODEL, temperature=0).invoke([msg]).content
-        return content if isinstance(content, str) else str(content)
+    msg = HumanMessage(content=[
+        {"type": "text", "text": "Extrae texto de este documento legal."},
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+    ])
+    content = ChatOpenAI(model=VISION_MODEL, temperature=0).invoke([msg]).content
+    return content if isinstance(content, str) else str(content)
     if path.name == "contrato_original.png":
         return "Contrato original: payment_terms $1.000; duration 12 meses; service_territory Argentina."
     return "Adenda compleja: payment_terms $1.500; duration 24 meses; service_territory Argentina Uruguay Paraguay."
 
 
 def contextualization_agent(original: str, amendment: str) -> str:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Mapea secciones; no extraigas cambios finales."),
-            ("user", "{original}\n\n{amendment}"),
-        ])
-        return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Mapea secciones; no extraigas cambios finales."),
+        ("user", "{original}\n\n{amendment}"),
+    ])
+    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
     return "Secciones detectadas: payment_terms, duration, service_territory. La adenda toca las tres."
 
 
 def extraction_agent(original: str, amendment: str, context_map: str, broken: bool = False) -> dict[str, Any]:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import JsonOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import JsonOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Extrae cambios como JSON usando el mapa de contexto."),
-            ("user", "Mapa:{context_map}\nOriginal:{original}\nAdenda:{amendment}"),
-        ])
-        return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | JsonOutputParser()).invoke({"context_map": context_map, "original": original, "amendment": amendment})
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Extrae cambios como JSON usando el mapa de contexto."),
+        ("user", "Mapa:{context_map}\nOriginal:{original}\nAdenda:{amendment}"),
+    ])
+    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | JsonOutputParser()).invoke({"context_map": context_map, "original": original, "amendment": amendment})
     if broken:
         return {"sections_changed": ["payment_terms"], "topics_touched": ["monto mensual"], "summary_of_the_change": "corto"}
     return read_json(EXPECTED_PATH)

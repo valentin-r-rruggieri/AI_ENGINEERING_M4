@@ -6,10 +6,6 @@ Objetivo pedagogico:
     Entender que cada token puede mirar a todos los demas, visualizar una
     matriz NxN y contrastar texto libre vs DependencyMap estructurado.
 
-USE_REAL_API = False:
-    Lee textos reales y usa mocks calibrados.
-USE_REAL_API = True:
-    Usa LangChain structured output para extraer dependencias.
 """
 
 from __future__ import annotations
@@ -26,15 +22,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 SENTENCE_PATH = DATA_DIR / "oracion_ejemplo.txt"
@@ -96,20 +92,19 @@ def qkv_demo(tokens: list[str]) -> np.ndarray:
 
 
 def extract_dependencies(sentence: str) -> DependencyMap:
-    if USE_REAL_API:
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        class _DependencyMap(DependencyMap):
-            pass
+    class _DependencyMap(DependencyMap):
+        pass
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Extrae dependencias de atencion semantica entre palabras. Devolve schema estricto."),
-            ("user", "{sentence}"),
-        ])
-        chain = prompt | llm.with_structured_output(_DependencyMap)
-        return cast(DependencyMap, chain.invoke({"sentence": sentence}))
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Extrae dependencias de atencion semantica entre palabras. Devolve schema estricto."),
+        ("user", "{sentence}"),
+    ])
+    chain = prompt | llm.with_structured_output(_DependencyMap)
+    return cast(DependencyMap, chain.invoke({"sentence": sentence}))
     if "hipertension" in sentence.lower():
         return DependencyMap(sentence=sentence, links=[
             AttentionLink(token="hipertension", attends_to="losartan", reason="tratamiento indicado"),

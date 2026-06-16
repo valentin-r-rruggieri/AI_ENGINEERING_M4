@@ -12,8 +12,6 @@ Flujo:
     →  LangChain chain (ChatPromptTemplate + structured_output)
     →  SupportCallSummary validado por Pydantic
 
-USE_REAL_API = False → lee el archivo WAV real + transcript de referencia + mock LLM
-USE_REAL_API = True  → transcribe con Whisper real + LangChain summarize
 """
 
 import os
@@ -32,6 +30,8 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI.")
 
 QUIET = "--quiet" in sys.argv
 
@@ -50,7 +50,6 @@ def trace_text(role: str, payload: str) -> None:
 def trace_json(role: str, payload) -> None:  # type: ignore[no-untyped-def]
     trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
-USE_REAL_API  = False
 MODEL_NAME    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 AUDIO_MODEL   = os.getenv("OPENAI_AUDIO_MODEL", "whisper-1")
 DATA_DIR      = Path(__file__).parent / "data"
@@ -99,29 +98,16 @@ print()
 
 
 def transcribe_audio(audio_path: Path) -> str:
-    """
-    Transcribe un archivo WAV con Whisper.
-    USE_REAL_API = True  → Whisper real via OpenAI API
-    USE_REAL_API = False → usa el transcript de referencia
-    """
-    if USE_REAL_API:
-        from openai import OpenAI
-        client = OpenAI()
-        with open(audio_path, "rb") as f:
-            result = client.audio.transcriptions.create(
-                model=AUDIO_MODEL,
-                file=f,
-                language="es",
-            )
-        return result.text
-    else:
-        # Mock: usa el transcript de referencia del archivo .txt
-        transcript = TRANSCRIPT_PATH.read_text(encoding="utf-8").strip()
-        print(f"  [MOCK] Audio leído: {audio_path.name} ({audio_path.stat().st_size // 1024} KB)")
-        print("  [MOCK] Usando transcripción de referencia (sin API de Whisper)")
-        return transcript
-
-
+    """Transcribe un archivo WAV con Whisper real via OpenAI API."""
+    from openai import OpenAI
+    client = OpenAI()
+    with open(audio_path, "rb") as f:
+        result = client.audio.transcriptions.create(
+            model=AUDIO_MODEL,
+            file=f,
+            language="es",
+        )
+    return result.text
 def basic_pipeline(audio_path: Path) -> str:
     """Versión básica: solo transcribir. Sin estructura."""
     transcript = transcribe_audio(audio_path)
@@ -198,53 +184,28 @@ class SupportCallSummary(BaseModel):
 
 
 def summarize_call(transcript: str) -> SupportCallSummary:
-    """
-    Resumir y clasificar la llamada con LangChain.
-    Con USE_REAL_API=True: llama a GPT-4o-mini.
-    Con USE_REAL_API=False: simula la respuesta del modelo.
-    """
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.prompts import ChatPromptTemplate
+    """Resumir y clasificar la llamada con LangChain y OpenAI."""
+    from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        structured_llm = llm.with_structured_output(SupportCallSummary)
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    structured_llm = llm.with_structured_output(SupportCallSummary)
 
-        prompt = ChatPromptTemplate.from_messages([
-            (
-                "system",
-                "Sos un analizador experto de llamadas de soporte de ecommerce. "
-                "Devolvé un resumen estructurado con la intención del cliente, "
-                "nivel de urgencia y los pasos de acción para el agente."
-            ),
-            (
-                "user",
-                "Transcripción de la llamada:\n{transcript}"
-            ),
-        ])
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "Sos un analizador experto de llamadas de soporte de ecommerce. "
+            "Devolvé un resumen estructurado con la intención del cliente, "
+            "nivel de urgencia y los pasos de acción para el agente."
+        ),
+        (
+            "user",
+            "Transcripción de la llamada:\n{transcript}"
+        ),
+    ])
 
-        chain = prompt | structured_llm
-        return cast(SupportCallSummary, chain.invoke({"transcript": transcript}))
-
-    else:
-        # MOCK — simula lo que devolvería el modelo
-        print("  [MOCK] Simulando respuesta de GPT-4o-mini (LangChain chain)...")
-        return SupportCallSummary(
-            transcript=transcript,
-            summary=(
-                "El cliente reclama que el pedido 4521 no llegó y lo necesitaba "
-                "para el día de hoy. Solicita reenvío urgente o cancelación."
-            ),
-            customer_intent="delivery_claim",
-            urgency="high",
-            action_items=[
-                "Verificar estado del pedido 4521 en el sistema logístico",
-                "Consultar disponibilidad de reenvío express para hoy",
-                "Ofrecer al cliente: reenvío urgente O cancelación + reembolso",
-                "Actualizar el ticket con la decisión del cliente",
-            ],
-        )
-
+    chain = prompt | structured_llm
+    return cast(SupportCallSummary, chain.invoke({"transcript": transcript}))
 
 # ============================================================
 # 5. VALIDACIÓN
@@ -320,8 +281,8 @@ print("""
        - Agregar campo:     order_or_case_number: Optional[str]
        - Agregar campo:     estimated_resolution_days: Optional[int]
 
-  3. (Con API key) Cambiá USE_REAL_API = True:
-     - El script transcribirá el WAV con Whisper
+  3. Con OPENAI_API_KEY configurada:
+     - El script transcribe el WAV con Whisper
      - LangChain enviará la transcripción a GPT-4o-mini
      - Recibirás el SupportCallSummary generado por el modelo real
 """)

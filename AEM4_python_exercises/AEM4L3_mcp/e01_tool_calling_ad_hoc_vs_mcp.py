@@ -12,10 +12,6 @@ Flujo:
     -> version basica con texto libre
     -> version mejorada con tool_call estructurado y Pydantic
 
-USE_REAL_API = False:
-    Lee los JSON reales y simula el tool_call que devolveria LangChain.
-USE_REAL_API = True:
-    Usa ChatOpenAI.bind_tools() para que el modelo elija la tool.
 """
 
 from __future__ import annotations
@@ -31,15 +27,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 CATALOG_PATH = DATA_DIR / "catalogo_productos.json"
@@ -75,19 +71,16 @@ def consultar_precio(catalogo: list[dict[str, Any]], sku: str) -> dict[str, Any]
 
 
 def ad_hoc_tool_use(user_query: str) -> str:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Si el usuario pregunta por productos devolve BUSCAR: <nombre>. Si pregunta precio devolve PRECIO: <sku>."),
-            ("user", "{query}"),
-        ])
-        chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()
-        return chain.invoke({"query": user_query})
-    print("  [MOCK] Simulando salida libre del modelo...")
-    return "Buscar producto: auriculares, maximo cinco resultados"
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Si el usuario pregunta por productos devolve BUSCAR: <nombre>. Si pregunta precio devolve PRECIO: <sku>."),
+        ("user", "{query}"),
+    ])
+    chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()
+    return chain.invoke({"query": user_query})
 
 
 def parse_ad_hoc_output(text: str) -> dict[str, Any]:
@@ -98,28 +91,24 @@ def parse_ad_hoc_output(text: str) -> dict[str, Any]:
 
 
 def langchain_tool_call(user_query: str) -> dict[str, Any]:
-    if USE_REAL_API:
-        from langchain_core.tools import tool
-        from langchain_openai import ChatOpenAI
+    from langchain_core.tools import tool
+    from langchain_openai import ChatOpenAI
 
-        @tool(args_schema=BuscarProductoArgs)
-        def buscar_producto_tool(query: str, limit: int = 10) -> list:
-            """Busca productos en el catalogo por nombre, SKU o categoria."""
-            return []
+    @tool(args_schema=BuscarProductoArgs)
+    def buscar_producto_tool(query: str, limit: int = 10) -> list:
+        """Busca productos en el catalogo por nombre, SKU o categoria."""
+        return []
 
-        @tool(args_schema=ConsultarPrecioArgs)
-        def consultar_precio_tool(sku: str) -> dict:
-            """Consulta precio y stock de un SKU."""
-            return {}
+    @tool(args_schema=ConsultarPrecioArgs)
+    def consultar_precio_tool(sku: str) -> dict:
+        """Consulta precio y stock de un SKU."""
+        return {}
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        msg = llm.bind_tools([buscar_producto_tool, consultar_precio_tool]).invoke(user_query)
-        if not msg.tool_calls:
-            return {"name": "sin_tool", "args": {}}
-        return cast(dict[str, Any], msg.tool_calls[0])
-
-    print("  [MOCK] Simulando AIMessage.tool_calls de LangChain...")
-    return {"name": "buscar_producto", "args": {"query": "auriculares", "limit": 5}}
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    msg = llm.bind_tools([buscar_producto_tool, consultar_precio_tool]).invoke(user_query)
+    if not msg.tool_calls:
+        return {"name": "sin_tool", "args": {}}
+    return cast(dict[str, Any], msg.tool_calls[0])
 
 
 def execute_tool_call(catalogo: list[dict[str, Any]], tool_call: dict[str, Any]) -> Any:

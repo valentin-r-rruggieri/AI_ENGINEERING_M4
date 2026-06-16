@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import builtins
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -29,6 +30,14 @@ def trace_text(role: str, payload: str) -> None:
 
 def trace_json(role: str, payload: Any) -> None:
     trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+
+
+def require_openai_api_key() -> None:
+    """Falla temprano si el ejercicio requiere OpenAI y no hay API key."""
+    if not os.getenv("OPENAI_API_KEY"):
+        raise RuntimeError(
+            "Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI."
+        )
 
 
 def run_generator(data_dir: Path, script_name: str, required_path: Path) -> None:

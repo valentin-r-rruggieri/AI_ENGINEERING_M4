@@ -6,10 +6,6 @@ Objetivo pedagogico:
     Comparar un agente que hace todo contra ContextualizationAgent +
     ExtractionAgent, trabajando desde imagenes reales de contrato/adenda.
 
-USE_REAL_API = False:
-    Lee imagenes PNG reales y usa textos mock de referencia.
-USE_REAL_API = True:
-    Usa vision LangChain para leer imagenes y chains para ambos agentes.
 """
 
 from __future__ import annotations
@@ -24,15 +20,15 @@ from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 VISION_MODEL = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
@@ -47,70 +43,58 @@ def ensure_data() -> None:
 
 def image_to_text(path: Path) -> str:
     img_b64 = image_to_base64(path)
-    if USE_REAL_API:
-        from langchain_core.messages import HumanMessage
-        from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
+    from langchain_openai import ChatOpenAI
 
-        llm = ChatOpenAI(model=VISION_MODEL, temperature=0)
-        message = HumanMessage(content=[
-            {"type": "text", "text": "Extrae el texto visible de este documento legal. No inventes contenido."},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ])
-        content = llm.invoke([message]).content
-        return content if isinstance(content, str) else str(content)
-    print(f"  [MOCK] Imagen leida: {path.name} ({len(img_b64) // 1024} KB base64)")
-    if path.name == "contrato_original.png":
-        return (
-            "Clausula 1 payment_terms: monto mensual $1.000. "
-            "Clausula 2 duration: duracion 12 meses. "
-            "Clausula 3 service_territory: Argentina."
-        )
-    return "Adenda simple: modifica duration. Nueva duracion 18 meses."
+    llm = ChatOpenAI(model=VISION_MODEL, temperature=0)
+    message = HumanMessage(content=[
+        {"type": "text", "text": "Extrae el texto visible de este documento legal. No inventes contenido."},
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+    ])
+    content = llm.invoke([message]).content
+    return content if isinstance(content, str) else str(content)
 
 
 def monolithic_comparison(original: str, amendment: str) -> str:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Compara contrato y adenda. Responde en texto libre que cambio."),
-            ("user", "Contrato:\n{original}\n\nAdenda:\n{amendment}"),
-        ])
-        return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Compara contrato y adenda. Responde en texto libre que cambio."),
+        ("user", "Contrato:\n{original}\n\nAdenda:\n{amendment}"),
+    ])
+    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
     return "Parece que cambio la duracion del contrato, aunque no queda claro si hay otros ajustes."
 
 
 def contextualization_agent(original: str, amendment: str) -> str:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import StrOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Mapea secciones del contrato. No extraigas cambios finales."),
-            ("user", "Contrato:\n{original}\n\nAdenda:\n{amendment}"),
-        ])
-        return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Mapea secciones del contrato. No extraigas cambios finales."),
+        ("user", "Contrato:\n{original}\n\nAdenda:\n{amendment}"),
+    ])
+    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
     return "Secciones: payment_terms, duration, service_territory. La adenda toca solo duration."
 
 
 def extraction_agent(original: str, amendment: str, context_map: str) -> dict[str, Any]:
-    if USE_REAL_API:
-        from langchain_core.output_parsers import JsonOutputParser
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import JsonOutputParser
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Usa el context_map para extraer cambios. Devolve JSON con sections_changed, topics_touched, summary_of_the_change."),
-            ("user", "Context map:\n{context_map}\nContrato:\n{original}\nAdenda:\n{amendment}"),
-        ])
-        return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | JsonOutputParser()).invoke({
-            "context_map": context_map,
-            "original": original,
-            "amendment": amendment,
-        })
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Usa el context_map para extraer cambios. Devolve JSON con sections_changed, topics_touched, summary_of_the_change."),
+        ("user", "Context map:\n{context_map}\nContrato:\n{original}\nAdenda:\n{amendment}"),
+    ])
+    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | JsonOutputParser()).invoke({
+        "context_map": context_map,
+        "original": original,
+        "amendment": amendment,
+    })
     return {
         "sections_changed": ["duration"],
         "topics_touched": ["duracion contractual"],

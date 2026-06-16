@@ -9,12 +9,10 @@ Objetivo pedagógico:
     LangChain solo procesa los audios que superaron el gate.
 
 Flujo:
-    3 archivos WAV → transcribir (Whisper o mock) → calcular WER
+    3 archivos WAV → transcribir con Whisper real → calcular WER
     → gate: WER <= 0.20 → LangChain summarize → ReliableSummary
     → gate: WER > 0.20  → marcar como no confiable → revisión humana
 
-USE_REAL_API = False → lee los 3 WAV reales + transcripts de referencia + mock
-USE_REAL_API = True  → Whisper + LangChain reales
 """
 
 import os
@@ -33,6 +31,8 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI.")
 
 QUIET = "--quiet" in sys.argv
 
@@ -51,7 +51,6 @@ def trace_text(role: str, payload: str) -> None:
 def trace_json(role: str, payload) -> None:  # type: ignore[no-untyped-def]
     trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
-USE_REAL_API  = False
 MODEL_NAME    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 AUDIO_MODEL   = os.getenv("OPENAI_AUDIO_MODEL", "whisper-1")
 DATA_DIR      = Path(__file__).parent / "data"
@@ -104,7 +103,7 @@ print()
 def basic_pipeline(transcript: str) -> str:
     return f"Resumen generado de: '{transcript[:40]}...'"
 
-# Simular 3 casos de calidad distinta
+# Ejemplos ilustrativos de transcripciones de distinta calidad.
 casos_basico = [
     "Hola llamo porque el pedido cuatro cinco dos uno no llegó.",
     "Hola yamo prq el pddo 4521 no lyegó.",          # ASR con mucho ruido
@@ -189,49 +188,36 @@ Arquitectura:
 """)
 
 
-def transcribe_audio(audio_path: Path, reference_path: Path) -> str:
-    """Transcribe el audio. Si USE_REAL_API=False, usa el transcript de referencia."""
-    if USE_REAL_API:
-        from openai import OpenAI
-        client = OpenAI()
-        with open(audio_path, "rb") as f:
-            result = client.audio.transcriptions.create(
-                model=AUDIO_MODEL, file=f, language="es"
-            )
-        return result.text
-    else:
-        return reference_path.read_text(encoding="utf-8").strip()
+def transcribe_audio(audio_path: Path) -> str:
+    """Transcribe el audio con Whisper real."""
+    from openai import OpenAI
+    client = OpenAI()
+    with open(audio_path, "rb") as f:
+        result = client.audio.transcriptions.create(
+            model=AUDIO_MODEL, file=f, language="es"
+        )
+    return result.text
 
 
 def summarize_with_langchain(transcript: str) -> str:
     """
     Resumen con LangChain. Solo se llama cuando WER supera el gate.
     """
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_core.output_parsers import StrOutputParser
+    from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_core.output_parsers import StrOutputParser
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        prompt = ChatPromptTemplate.from_messages([
-            (
-                "system",
-                "Sos un sistema de resumen de llamadas de soporte. "
-                "Generá un resumen conciso en 2-3 oraciones indicando el problema y la urgencia."
-            ),
-            ("user", "Transcripción:\n{transcript}"),
-        ])
-        chain = prompt | llm | StrOutputParser()
-        return chain.invoke({"transcript": transcript})
-    else:
-        # MOCK — simula el resumen del LLM
-        words = transcript.split()[:6]
-        return (
-            f"El cliente contactó soporte con una consulta sobre: '{' '.join(words)}...' "
-            f"Se requiere atención del equipo de logística."
-        )
-
-
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "Sos un sistema de resumen de llamadas de soporte. "
+            "Generá un resumen conciso en 2-3 oraciones indicando el problema y la urgencia."
+        ),
+        ("user", "Transcripción:\n{transcript}"),
+    ])
+    chain = prompt | llm | StrOutputParser()
+    return chain.invoke({"transcript": transcript})
 def process_audio_with_gate(
     case_id: str,
     audio_path: Path,
@@ -243,7 +229,7 @@ def process_audio_with_gate(
     """
     print(f"  Procesando {audio_path.name}...")
     reference = reference_path.read_text(encoding="utf-8").strip()
-    hypothesis = transcribe_audio(audio_path, reference_path)
+    hypothesis = transcribe_audio(audio_path)
     wer = calculate_wer(reference, hypothesis)
 
     if wer <= wer_threshold:
@@ -282,61 +268,15 @@ def process_audio_with_gate(
 print("\n=== VALIDACIÓN — Los 3 archivos WAV ===")
 print()
 
-# Para simular distintas calidades de ASR, construimos hypothesis con distintos WER
-CASOS_HIPOTESIS = {
-    "llamada_soporte": lambda ref: ref,  # ASR perfecto (WER=0)
-    "indicacion_medica": lambda ref: ref.replace("ocho", "dos", 1),  # 1 error (WER~5%)
-    "reunion_equipo": lambda ref: " ".join(ref.split()[::2]),  # 50% palabras omitidas (WER~50%)
-}
-
 resultados: list[ReliableSummary] = []
 
-for name, mutate_fn in CASOS_HIPOTESIS.items():
+for name in ["llamada_soporte", "indicacion_medica", "reunion_equipo"]:
     audio_path = DATA_DIR / f"{name}.wav"
     ref_path   = TRANSCRIPTS_DIR / f"{name}_reference.txt"
     if not audio_path.exists() or not ref_path.exists():
         continue
 
-    # Sobreescribir transcribe_audio para el mock de calidad variable
-    original_transcribe = transcribe_audio
-
-    def transcribe_with_quality(audio_path=audio_path, ref_path=ref_path, name=name):
-        ref = ref_path.read_text(encoding="utf-8").strip()
-        if USE_REAL_API:
-            return original_transcribe(audio_path, ref_path)
-        return CASOS_HIPOTESIS[name](ref)
-
-    reference = ref_path.read_text(encoding="utf-8").strip()
-    hypothesis = CASOS_HIPOTESIS[name](reference)
-    wer = calculate_wer(reference, hypothesis)
-
-    if wer <= WER_THRESHOLD:
-        summary = summarize_with_langchain(hypothesis)
-        result = ReliableSummary(
-            case_id=f"call_{name}",
-            audio_file=audio_path.name,
-            reference_transcript=reference,
-            asr_transcript=hypothesis,
-            wer=wer,
-            summary=summary,
-            is_reliable=True,
-            human_review_required=False,
-            reason=f"WER {wer:.2%} dentro del umbral. Resumen generado con LangChain.",
-            risk_level="low" if wer <= 0.05 else "medium",
-        )
-    else:
-        result = ReliableSummary(
-            case_id=f"call_{name}",
-            audio_file=audio_path.name,
-            reference_transcript=reference,
-            asr_transcript=hypothesis,
-            wer=wer,
-            summary=f"[NO GENERADO — WER {wer:.2%} supera el umbral {WER_THRESHOLD:.0%}]",
-            is_reliable=False,
-            human_review_required=True,
-            reason=f"WER {wer:.2%} supera el umbral. Revisión humana.",
-            risk_level="high",
-        )
+    result = process_audio_with_gate(f"call_{name}", audio_path, ref_path)
 
     resultados.append(result)
     icon = "✓" if result.is_reliable else "✗"
@@ -389,10 +329,10 @@ print(f"""
   Modificá process_audio_with_gate() para recibir domain: str
   y buscar el umbral en el diccionario.
 
-  Probá la indicación médica (WER ~5%) con domain="medical" vs domain="ecommerce".
+  Probá la indicación médica con domain="medical" vs domain="ecommerce".
   ¿En cuál pasa el gate? ¿Cuál es el correcto para el dominio médico?
 
-  (Con API key real: USE_REAL_API = True para transcribir los WAV reales con Whisper)
+  El script siempre usa OPENAI_API_KEY y Whisper real para transcribir.
 """)
 
 trace_text("USER", "Procesá los audios y resumí solo si pasan el reliability gate.")

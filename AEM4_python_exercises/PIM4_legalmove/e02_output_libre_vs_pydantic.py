@@ -6,10 +6,6 @@ Objetivo pedagogico:
     Mostrar que el ExtractionAgent puede devolver formatos inconsistentes y
     que ContractChangeOutput es la ultima linea de defensa.
 
-USE_REAL_API = False:
-    Lee golden JSON real y devuelve mock valido.
-USE_REAL_API = True:
-    Usa LangChain with_structured_output(ContractChangeOutput).
 """
 
 from __future__ import annotations
@@ -24,15 +20,15 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 CONTRACT_IMG = DATA_DIR / "contrato_original.png"
@@ -61,18 +57,15 @@ def agent_free_text_output() -> str:
 
 
 def structured_extraction(expected: dict) -> ContractChangeOutput:
-    if USE_REAL_API:
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "Extrae cambios contractuales con el schema indicado."),
-            ("user", "Caso complejo LegalMove. Devolve los tres campos requeridos."),
-        ])
-        chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ContractChangeOutput)
-        return cast(ContractChangeOutput, chain.invoke({}))
-    print("  [MOCK] Simulando structured output de LangChain...")
-    return ContractChangeOutput(**expected)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Extrae cambios contractuales con el schema indicado."),
+        ("user", "Caso complejo LegalMove. Devolve los tres campos requeridos."),
+    ])
+    chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ContractChangeOutput)
+    return cast(ContractChangeOutput, chain.invoke({}))
 
 
 def main() -> None:

@@ -11,10 +11,6 @@ Flujo:
     -> payload viejo falla contra v2
     -> clasificador SemVer + adaptador v1 a v2
 
-USE_REAL_API = False:
-    Lee schemas reales y simula la eleccion de version.
-USE_REAL_API = True:
-    Usa LangChain bind_tools() con transferir_fondos_v1 y v2.
 """
 
 from __future__ import annotations
@@ -29,15 +25,15 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
 load_dotenv()
+require_openai_api_key()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 SCHEMA_V1 = DATA_DIR / "tool_schema_v1.json"
@@ -77,26 +73,23 @@ def migrate_v1_to_v2(payload_v1: dict[str, Any]) -> TransferV2:
 
 
 def choose_tool_version(query: str) -> dict[str, Any]:
-    if USE_REAL_API:
-        from langchain_core.tools import tool
-        from langchain_openai import ChatOpenAI
+    from langchain_core.tools import tool
+    from langchain_openai import ChatOpenAI
 
-        @tool
-        def transferir_fondos_v1(monto: str, cuenta_destino: str) -> str:
-            """Version legacy: monto como string."""
-            return "ok"
+    @tool
+    def transferir_fondos_v1(monto: str, cuenta_destino: str) -> str:
+        """Version legacy: monto como string."""
+        return "ok"
 
-        @tool
-        def transferir_fondos_v2(monto: float, cuenta_destino: str, moneda: str) -> str:
-            """Version nueva: monto numerico y moneda requerida."""
-            return "ok"
+    @tool
+    def transferir_fondos_v2(monto: float, cuenta_destino: str, moneda: str) -> str:
+        """Version nueva: monto numerico y moneda requerida."""
+        return "ok"
 
-        msg = ChatOpenAI(model=MODEL_NAME, temperature=0).bind_tools([transferir_fondos_v1, transferir_fondos_v2]).invoke(query)
-        if not msg.tool_calls:
-            return {"name": "sin_tool", "args": {}}
-        return cast(dict[str, Any], msg.tool_calls[0])
-    print("  [MOCK] Simulando eleccion de version por LangChain...")
-    return {"name": "transferir_fondos_v2", "args": {"monto": 1000.0, "cuenta_destino": "CBU-123", "moneda": "ARS"}}
+    msg = ChatOpenAI(model=MODEL_NAME, temperature=0).bind_tools([transferir_fondos_v1, transferir_fondos_v2]).invoke(query)
+    if not msg.tool_calls:
+        return {"name": "sin_tool", "args": {}}
+    return cast(dict[str, Any], msg.tool_calls[0])
 
 
 def main() -> None:

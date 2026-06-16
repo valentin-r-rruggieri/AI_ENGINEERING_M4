@@ -33,4 +33,4 @@ python PIM4_legalmove/e03_sin_logs_vs_langfuse.py
 - **ContractChangeOutput:** schema Pydantic que valida `sections_changed`, `topics_touched` y `summary_of_the_change`.
 - **Span:** unidad de trazabilidad — captura nombre, input preview, output preview y latencia.
 - **Trace:** colección de spans que representa la ejecución completa del pipeline.
-- **Langfuse:** plataforma de observabilidad para LLMs (usamos mock por defecto).
+- **Langfuse:** plataforma de observabilidad para LLMs; los ejercicios usan llamadas reales a OpenAI y trazas locales de apoyo.

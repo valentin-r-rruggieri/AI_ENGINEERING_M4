@@ -1,5 +1,5 @@
 """
-E01 — Formulario bancario limpio: texto libre vs Pydantic + LangChain
+E03 — Formulario bancario limpio: texto libre vs Pydantic + LangChain
 AEM4L1 | Visión e Imágenes
 
 Objetivo pedagógico:
@@ -11,10 +11,6 @@ Flujo:
     imagen PNG real  →  encode base64  →  LangChain ChatOpenAI (multimodal)
     →  structured_output(BankApplication)  →  Pydantic validado
 
-USE_REAL_API = False:
-    Lee la imagen real del disco → simula la respuesta del modelo con mock.
-USE_REAL_API = True:
-    Lee la imagen real → la envía a GPT-4o-mini → parsea con Pydantic.
 """
 
 import os
@@ -29,12 +25,20 @@ from typing import Optional, cast
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
+# Asegura salida UTF-8 en terminales de VS Code/macOS para no romper acentos.
 reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
 if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
+# Carga OPENAI_API_KEY y el modelo opcional desde .env.
 load_dotenv()
 
+# En esta versión no hay modo alternativo: si falta la key, el ejercicio no
+# puede demostrar el flujo real de LangChain + OpenAI.
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI.")
+
+# Permite ocultar trazas cuando el archivo se use en checks automatizados.
 QUIET = "--quiet" in sys.argv
 
 
@@ -44,13 +48,13 @@ def print(*args, **kwargs):  # type: ignore[no-untyped-def]
 
 
 def trace(role: str, payload: str) -> None:
+    # Única salida visible: mantiene el ejemplo cerca de un user-agent real.
     if not QUIET:
         builtins.print(f"{role}:")
         builtins.print(payload)
         builtins.print()
 
 # ── Configuración ──────────────────────────────────────────────
-USE_REAL_API   = False
 MODEL_NAME     = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
 DATA_DIR       = Path(__file__).parent / "data"
 IMAGE_PATH     = DATA_DIR / "formulario_bancario_limpio.png"
@@ -58,6 +62,7 @@ IMAGE_PATH     = DATA_DIR / "formulario_bancario_limpio.png"
 
 # ── Generar imágenes si no existen ────────────────────────────
 def ensure_data() -> None:
+    # El ejercicio usa una imagen real; si el dataset falta, lo regeneramos.
     if not IMAGE_PATH.exists():
         print("Imágenes no encontradas. Generando...")
         subprocess.run(
@@ -74,7 +79,7 @@ ensure_data()
 # ============================================================
 
 print("=" * 60)
-print("AEM4L1 | E01 — Formulario bancario limpio")
+print("AEM4L1 | E03 — Formulario bancario limpio")
 print("=" * 60)
 print(f"""
 CASO:
@@ -108,26 +113,18 @@ def basic_extraction_free_text(image_path: Path) -> str:
     img_b64 = encode_image_to_base64(image_path)
     print(f"  Imagen codificada: {len(img_b64) // 1024} KB base64")
 
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.messages import HumanMessage
+    # Esta primera llamada es intencionalmente libre: muestra el problema antes
+    # de resolverlo con Pydantic.
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        message = HumanMessage(content=[
-            {"type": "text", "text": "Describí qué ves en este formulario bancario."},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ])
-        response = llm.invoke([message])
-        return response.content if isinstance(response.content, str) else str(response.content)
-    else:
-        # MOCK — simula lo que devolvería el modelo sin instrucciones de formato
-        return (
-            "El solicitante parece ser Juan Pérez. "
-            "Pidió 50000 pesos aproximadamente. "
-            "El DNI es 40111222 y firmó abajo."
-        )
-
-
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    message = HumanMessage(content=[
+        {"type": "text", "text": "Describí qué ves en este formulario bancario."},
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+    ])
+    response = llm.invoke([message])
+    return response.content if isinstance(response.content, str) else str(response.content)
 texto_libre = basic_extraction_free_text(IMAGE_PATH)
 trace("USER", "Describí qué ves en este formulario bancario.")
 trace("LLM", texto_libre)
@@ -189,8 +186,11 @@ class BankApplication(BaseModel):
     Schema de validación para la solicitud bancaria.
     LangChain con .with_structured_output() obliga al modelo a cumplir este schema.
     """
+    # DNI queda como string porque no se calcula con él y puede tener ceros iniciales.
     full_name: str = Field(..., description="Nombre completo del solicitante")
     document_number: str = Field(..., description="Número de DNI sin puntos")
+
+    # gt=0 convierte una regla de negocio en validación automática.
     requested_amount: float = Field(..., gt=0, description="Monto solicitado en pesos (positivo)")
     birth_date: Optional[date] = Field(None, description="Fecha de nacimiento YYYY-MM-DD")
     signature_present: bool = Field(..., description="True si hay firma visible en el formulario")
@@ -199,49 +199,35 @@ class BankApplication(BaseModel):
 def structured_extraction(image_path: Path) -> BankApplication:
     """
     Versión mejorada: LangChain envía la imagen y fuerza el schema Pydantic.
-
-    USE_REAL_API = True  → llamada real a GPT-4o-mini
-    USE_REAL_API = False → lee la imagen real + simula la respuesta del modelo
     """
     img_b64 = encode_image_to_base64(image_path)
 
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.messages import HumanMessage
+    # Segunda llamada: mismo input visual, pero ahora con contrato de salida.
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        structured_llm = llm.with_structured_output(BankApplication)
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
 
-        message = HumanMessage(content=[
-            {
-                "type": "text",
-                "text": (
-                    "Analizá esta imagen de un formulario bancario y extraé los datos solicitados. "
-                    "Si un campo no es legible, devolvé null. "
-                    "El document_number debe ser solo los dígitos, sin puntos ni espacios."
-                ),
-            },
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{img_b64}"},
-            },
+    # El wrapper genera una salida que debe mapear a BankApplication.
+    structured_llm = llm.with_structured_output(BankApplication)
+
+    message = HumanMessage(content=[
+        {
+            "type": "text",
+            "text": (
+                "Analizá esta imagen de un formulario bancario y extraé los datos solicitados. "
+                "Si un campo no es legible, devolvé null. "
+                "El document_number debe ser solo los dígitos, sin puntos ni espacios."
+            ),
+        },
+        {
+            "type": "image_url",
+            "image_url": {"url": f"data:image/png;base64,{img_b64}"},
+        },
         ])
 
         # LangChain hace la llamada y valida el output contra BankApplication
-        return cast(BankApplication, structured_llm.invoke([message]))
-
-    else:
-        # MOCK: imagen leída, respuesta simulada
-        print(f"  [MOCK] Imagen leída: {image_path.name} ({len(img_b64) // 1024} KB)")
-        print("  [MOCK] Simulando respuesta de GPT-4o-mini...")
-        return BankApplication(
-            full_name="Juan Pérez",
-            document_number="40111222",
-            requested_amount=50000.0,
-            birth_date=date(1994, 5, 12),
-            signature_present=True,
-        )
-
+    return cast(BankApplication, structured_llm.invoke([message]))
 
 application = structured_extraction(IMAGE_PATH)
 trace(
@@ -329,12 +315,11 @@ print("""
        from typing import Literal
        employment_status: Literal["empleado", "autonomo", "desempleado"]
 
-  2. En el mock (o con API real), incluí ese campo en la respuesta.
+  2. Agregá ese campo al prompt y pedile al modelo que lo complete si es legible.
 
   3. Probá que Pydantic rechaza employment_status = "jubilado".
 
-  4. (Si tenés API key) Cambiá USE_REAL_API = True,
-     copiá .env.example a .env, completá OPENAI_API_KEY y ejecutá.
+  4. Verificá que .env tenga OPENAI_API_KEY y ejecutá.
      ¿El modelo lee correctamente el formulario PNG generado?
 """)
 

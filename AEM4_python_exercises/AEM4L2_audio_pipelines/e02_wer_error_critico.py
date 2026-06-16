@@ -8,12 +8,10 @@ Objetivo pedagógico:
     LangChain genera el informe de evaluación estructurado.
 
 Flujo:
-    archivo WAV (indicacion_medica.wav) → leer transcript de referencia
-    → simular ASR con error de sustitución → calcular WER
+    archivo WAV (indicacion_medica.wav) → Whisper real
+    → comparar contra transcript de referencia → calcular WER
     → LangChain chain → ASREvaluation estructurado
 
-USE_REAL_API = False → usa transcripts de referencia + error simulado + mock LLM
-USE_REAL_API = True  → Whisper transcribe el WAV + LangChain evalúa
 """
 
 import os
@@ -32,6 +30,8 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI.")
 
 QUIET = "--quiet" in sys.argv
 
@@ -50,7 +50,6 @@ def trace_text(role: str, payload: str) -> None:
 def trace_json(role: str, payload) -> None:  # type: ignore[no-untyped-def]
     trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
-USE_REAL_API  = False
 MODEL_NAME    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 AUDIO_MODEL   = os.getenv("OPENAI_AUDIO_MODEL", "whisper-1")
 DATA_DIR      = Path(__file__).parent / "data"
@@ -78,8 +77,14 @@ print("=" * 60)
 # Leer transcripción de referencia
 REFERENCE = TRANSCRIPT_PATH.read_text(encoding="utf-8").strip()
 
-# Simular error de sustitución: "ocho" → "dos" (dosis incorrecta)
-HYPOTHESIS = REFERENCE.replace("ocho", "dos", 1)
+from openai import OpenAI
+
+with open(AUDIO_PATH, "rb") as audio_file:
+    HYPOTHESIS = OpenAI().audio.transcriptions.create(
+        model=AUDIO_MODEL,
+        file=audio_file,
+        language="es",
+    ).text
 
 print(f"""
 CASO:
@@ -90,9 +95,9 @@ CASO:
 Audio: {AUDIO_PATH.name} ({AUDIO_PATH.stat().st_size // 1024} KB)
 Referencia (lo que dijo el médico):
   "{REFERENCE}"
-Transcripción ASR (hypothesis):
+Transcripción ASR real (hypothesis):
   "{HYPOTHESIS}"
-Diferencia: "ocho" → "dos"  ← cada 8h vs cada 2h → posible sobredosis
+Diferencia: se calcula automáticamente contra la referencia.
 """)
 
 
@@ -259,60 +264,40 @@ def build_evaluation_report(
 ) -> ASREvaluation:
     """
     Construye el informe de evaluación.
-    Con USE_REAL_API=True: usa LangChain para generar el análisis narrativo.
-    Con USE_REAL_API=False: construye directamente el objeto Pydantic.
+    Usa LangChain para generar el análisis narrativo.
     """
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.prompts import ChatPromptTemplate
+    from langchain_openai import ChatOpenAI
+    from langchain_core.prompts import ChatPromptTemplate
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        structured_llm = llm.with_structured_output(ASREvaluation)
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+    structured_llm = llm.with_structured_output(ASREvaluation)
 
-        prompt = ChatPromptTemplate.from_messages([
-            (
-                "system",
-                "Sos un auditor de calidad de sistemas ASR médicos. "
-                "Evaluá la transcripción e identificá si hay errores críticos."
-            ),
-            (
-                "user",
-                "Referencia: {reference}\n"
-                "Hypothesis: {hypothesis}\n"
-                "WER calculado: {wer:.2%}\n"
-                "Sustituciones: {s}, Deleciones: {d}, Inserciones: {ins}\n"
-                "Error crítico detectado: {is_crit}\n"
-                "Explicación: {expl}\n\n"
-                "Generá el informe completo de evaluación."
-            ),
-        ])
-        chain = prompt | structured_llm
-        return cast(ASREvaluation, chain.invoke({
-            "reference": reference,
-            "hypothesis": hypothesis,
-            "wer": wer_val,
-            "s": s, "d": d, "ins": i,
-            "is_crit": is_crit,
-            "expl": expl,
-        }))
-    else:
-        domain_risk = "critical" if is_crit else (
-            "low" if wer_val <= 0.05 else
-            "medium" if wer_val <= 0.15 else "high"
-        )
-        return ASREvaluation(
-            reference=reference,
-            hypothesis=hypothesis,
-            wer=wer_val,
-            substitutions=s,
-            deletions=d,
-            insertions=i,
-            critical_error=is_crit,
-            explanation=expl,
-            domain_risk=domain_risk,
-        )
-
-
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            "Sos un auditor de calidad de sistemas ASR médicos. "
+            "Evaluá la transcripción e identificá si hay errores críticos."
+        ),
+        (
+            "user",
+            "Referencia: {reference}\n"
+            "Hypothesis: {hypothesis}\n"
+            "WER calculado: {wer:.2%}\n"
+            "Sustituciones: {s}, Deleciones: {d}, Inserciones: {ins}\n"
+            "Error crítico detectado: {is_crit}\n"
+            "Explicación: {expl}\n\n"
+            "Generá el informe completo de evaluación."
+        ),
+    ])
+    chain = prompt | structured_llm
+    return cast(ASREvaluation, chain.invoke({
+        "reference": reference,
+        "hypothesis": hypothesis,
+        "wer": wer_val,
+        "s": s, "d": d, "ins": i,
+        "is_crit": is_crit,
+        "expl": expl,
+    }))
 evaluation = build_evaluation_report(
     REFERENCE, HYPOTHESIS, wer, subs, dels, ins, is_critical, explanation
 )
@@ -381,8 +366,7 @@ print("""
        hypothesis = "transferir un mil de pesos a la cuenta cuatro cinco dos uno"
      ¿Cuál es el WER? ¿Es un error crítico financiero?
 
-  3. (Con API key) Cambiá USE_REAL_API = True:
-     Whisper transcribirá el WAV real y el modelo evaluará la calidad.
+  3. Con OPENAI_API_KEY configurada, Whisper transcribe el WAV real y el modelo evalúa la calidad.
 """)
 
 trace_text("REFERENCE", REFERENCE)

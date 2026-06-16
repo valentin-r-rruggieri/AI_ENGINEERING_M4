@@ -1,5 +1,5 @@
 """
-E03 — Golden cases visuales: evaluación reproducible
+E05 — Golden cases visuales: evaluación reproducible
 AEM4L1 | Visión e Imágenes
 
 Objetivo pedagógico:
@@ -12,8 +12,6 @@ Flujo:
         encode base64 → LangChain multimodal → BankApplicationWithConfidence
         comparar con expected JSON → calcular valid_schema, accuracy, completeness, human_review_correct
 
-USE_REAL_API = False → lee las 3 imágenes reales + mocks calibrados
-USE_REAL_API = True  → envía las 3 imágenes a GPT-4o-mini + compara con expected
 """
 
 import os
@@ -30,12 +28,19 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError
 
+# Asegura salida UTF-8 para métricas y textos en español.
 reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
 if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
+# Carga credenciales y modelo desde .env.
 load_dotenv()
 
+# Golden cases mide el modelo real; sin API key no hay resultado válido.
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("Falta OPENAI_API_KEY. Copia .env.example a .env y completa tu API key de OpenAI.")
+
+# --quiet oculta las trazas si se corre desde un pipeline de validación.
 QUIET = "--quiet" in sys.argv
 
 
@@ -45,18 +50,19 @@ def print(*args, **kwargs):  # type: ignore[no-untyped-def]
 
 
 def trace(role: str, payload: str) -> None:
+    # Todas las salidas observables pasan por roles para comparar casos.
     if not QUIET:
         builtins.print(f"{role}:")
         builtins.print(payload)
         builtins.print()
 
-USE_REAL_API = False
 MODEL_NAME   = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
 DATA_DIR     = Path(__file__).parent / "data"
 EXPECTED_DIR = DATA_DIR / "expected"
 
 
 def ensure_data() -> None:
+    # Los golden cases dependen de imágenes y JSON esperados generados localmente.
     missing = not (DATA_DIR / "formulario_bancario_limpio.png").exists()
     if missing:
         print("Imágenes no encontradas. Generando...")
@@ -71,7 +77,7 @@ ensure_data()
 # ============================================================
 
 print("=" * 60)
-print("AEM4L1 | E03 — Golden cases visuales")
+print("AEM4L1 | E05 — Golden cases visuales")
 print("=" * 60)
 print("""
 CASO:
@@ -118,6 +124,8 @@ print()
 
 
 class BankApplicationWithConfidence(BaseModel):
+    # Este schema replica el contrato de E04 para medir calidad con el mismo
+    # formato que usaría el pipeline de producción.
     full_name: Optional[str] = None
     document_number: Optional[str] = None
     requested_amount: Optional[float] = Field(None, gt=0)
@@ -129,87 +137,53 @@ class BankApplicationWithConfidence(BaseModel):
 
 
 def encode_image_to_base64(path: Path) -> str:
+    # Cada caso visual se envía al modelo como imagen base64 embebida.
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
 
 def load_expected(image_name: str) -> dict:
     """Carga el JSON de expected output para una imagen."""
+    # Convención: formulario_bancario_limpio.png -> expected/formulario_bancario_limpio.json
     stem = image_name.replace(".png", "")
     path = EXPECTED_DIR / f"{stem}.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-# MOCKS calibrados — simulan con precisión lo que devolvería el modelo
-MOCKS: dict[str, dict] = {
-    "formulario_bancario_limpio.png": {
-        "full_name": "Juan Pérez",
-        "document_number": "40111222",
-        "requested_amount": 50000.0,
-        "birth_date": "1994-05-12",
-        "signature_present": True,
-        "confidence": "high",
-        "extraction_notes": "Imagen clara. Todos los campos son legibles sin ambigüedad.",
-        "requires_human_review": False,
-    },
-    "formulario_bancario_cafe.png": {
-        "full_name": "Juan Pérez",
-        "document_number": "40111222",  # ← mock con error: modelo inventó el DNI tapado
-        "requested_amount": 50000.0,
-        "birth_date": None,
-        "signature_present": True,
-        "confidence": "medium",
-        "extraction_notes": "Fecha de nacimiento cubierta por mancha. DNI parcialmente visible.",
-        "requires_human_review": True,
-    },
-    "formulario_bancario_borroso.png": {
-        "full_name": None,
-        "document_number": None,
-        "requested_amount": None,
-        "birth_date": None,
-        "signature_present": None,
-        "confidence": "low",
-        "extraction_notes": "Imagen de muy baja calidad. No es posible extraer información confiable.",
-        "requires_human_review": True,
-    },
-}
-
-
 def extract_from_image(image_path: Path) -> dict:
-    """Extrae datos de una imagen con LangChain (real o mock)."""
+    """Extrae datos de una imagen con LangChain y OpenAI."""
     img_b64 = encode_image_to_base64(image_path)
-    image_name = image_path.name
 
-    if USE_REAL_API:
-        from langchain_openai import ChatOpenAI
-        from langchain_core.messages import HumanMessage
+    # El mismo extractor se ejecuta sobre todos los casos para que la comparación
+    # sea justa y reproducible.
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
 
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
-        structured_llm = llm.with_structured_output(BankApplicationWithConfidence)
+    llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
 
-        message = HumanMessage(content=[
-            {
-                "type": "text",
-                "text": (
-                    "Analizá el formulario bancario. "
-                    "Devolvé null para campos no legibles. "
-                    "Indicá confidence y requires_human_review."
-                ),
-            },
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ])
-        result = cast(BankApplicationWithConfidence, structured_llm.invoke([message]))
-        return result.model_dump()
-    else:
-        print(f"  [MOCK] {image_name} leído ({image_path.stat().st_size // 1024} KB)")
-        return MOCKS[image_name]
+    # Structured output obliga a que todos los casos tengan la misma forma.
+    structured_llm = llm.with_structured_output(BankApplicationWithConfidence)
 
-
+    message = HumanMessage(content=[
+        {
+            "type": "text",
+            "text": (
+                "Analizá el formulario bancario. "
+                "Devolvé null para campos no legibles. "
+                "Indicá confidence y requires_human_review."
+            ),
+        },
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+    ])
+    result = cast(BankApplicationWithConfidence, structured_llm.invoke([message]))
+    return result.model_dump()
 # ============================================================
 # 4. LAS 4 MÉTRICAS
 # ============================================================
 
 def validate_schema(actual: dict) -> bool:
     """Métrica 1: ¿el output cumple el schema Pydantic?"""
+    # Schema válido no significa dato correcto, pero sí significa que el backend
+    # puede consumir la respuesta sin romperse.
     try:
         BankApplicationWithConfidence(**actual)
         return True
@@ -234,6 +208,7 @@ def calculate_completeness(expected: dict, actual: dict) -> float:
     Métrica 3: ¿cuántos campos esperados (no-None) están presentes en el actual?
     Detecta cuando el modelo omite campos.
     """
+    # Completeness detecta omisiones: campos que deberían venir pero quedaron None.
     campos = [k for k, v in expected.items() if v is not None and k not in ("extraction_notes",)]
     if not campos:
         return 1.0
@@ -246,11 +221,13 @@ def check_human_review_correct(expected: dict, actual: dict) -> bool:
     Métrica 4: ¿el modelo marcó correctamente requires_human_review?
     Un falso negativo (debería ser True pero devolvió False) es peligroso.
     """
+    # Esta métrica evalúa la decisión operativa, no solo los valores extraídos.
     return expected.get("requires_human_review") == actual.get("requires_human_review")
 
 
 @dataclass
 class CaseResult:
+    # Contenedor liviano para imprimir y agregar métricas por caso.
     case_id: str
     image_name: str
     valid_schema: bool
@@ -386,7 +363,7 @@ print("""
     - ¿Cuánta accuracy logra con 5° de rotación vs 15°?
     - ¿A qué ángulo el modelo empieza a confabular?
 
-  (Con USE_REAL_API = True podés probarlo de verdad.)
+  Ejecutalo con OPENAI_API_KEY para medir el comportamiento real del modelo.
 """)
 
 def main():

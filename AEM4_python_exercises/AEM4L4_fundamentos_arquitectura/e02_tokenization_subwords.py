@@ -6,8 +6,9 @@ Objetivo pedagogico:
     Mostrar por que word-level produce [UNK], como BPE/WordPiece reconstruyen
     terminos raros y por que mas tokens implican mas costo O(N^2).
 
-USE_REAL_API = False/True:
-    Este ejercicio no necesita LLM para el nucleo matematico; siempre usa data local.
+Nota:
+    Este ejercicio no llama al LLM porque el nucleo es matematico:
+    tokenizacion, subwords y costo de contexto.
 """
 
 from __future__ import annotations
@@ -30,7 +31,6 @@ def print(*args, **kwargs):  # type: ignore[no-untyped-def]
 
 load_dotenv()
 
-USE_REAL_API = False
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 LEGAL_PATH = DATA_DIR / "contrato_legal.txt"

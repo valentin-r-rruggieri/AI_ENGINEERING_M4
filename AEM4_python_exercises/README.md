@@ -35,12 +35,18 @@ pip install -r requirements.txt
 ## Ejecutar un ejercicio
 
 ```bash
-python AEM4L1_vision_imagenes/e01_formulario_limpio_pydantic.py
+python AEM4L1_vision_imagenes/e01_vision_descripcion_basica.py
 ```
 
-Todos los ejercicios usan **mocks por defecto** — funcionan sin API keys.
+Todos los ejercicios que llaman modelos usan **OpenAI real mediante LangChain/OpenAI wrappers**. No hay selector de ejecución alternativo.
 
-Para activar APIs reales, copiá `.env.example` a `.env` y completá las keys, luego cambiá `USE_REAL_API = True` dentro del archivo correspondiente.
+Antes de ejecutar, copiá `.env.example` a `.env` y completá:
+
+```bash
+OPENAI_API_KEY=...
+```
+
+Los scripts fallan temprano si falta la API key, para que la clase use siempre el flujo real.
 
 ---
 
@@ -48,7 +54,7 @@ Para activar APIs reales, copiá `.env.example` a `.env` y completá las keys, l
 
 | Módulo | Objetivo |
 |---|---|
-| **AEM4L1** | Pasar de imagen → texto libre → JSON validado con Pydantic |
+| **AEM4L1** | Pasar de imagen → descripción libre → JSON mínimo → Pydantic completo |
 | **AEM4L2** | Transcribir → medir calidad (WER) → pipeline confiable |
 | **AEM4L3** | Wrappers ad hoc → contrato MCP → scopes + versionado |
 | **AEM4L4** | Intuir self-attention → tokenización → decisiones LoRA vs FT |
