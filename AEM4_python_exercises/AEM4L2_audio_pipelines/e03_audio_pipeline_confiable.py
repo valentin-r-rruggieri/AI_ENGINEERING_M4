@@ -18,6 +18,8 @@ USE_REAL_API = True  → Whisper + LangChain reales
 """
 
 import os
+import builtins
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -31,6 +33,23 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
+
+
+def trace_text(role: str, payload: str) -> None:
+    if not QUIET:
+        builtins.print(f"{role}:")
+        builtins.print(payload)
+        builtins.print()
+
+
+def trace_json(role: str, payload) -> None:  # type: ignore[no-untyped-def]
+    trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
 USE_REAL_API  = False
 MODEL_NAME    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -375,6 +394,15 @@ print(f"""
 
   (Con API key real: USE_REAL_API = True para transcribir los WAV reales con Whisper)
 """)
+
+trace_text("USER", "Procesá los audios y resumí solo si pasan el reliability gate.")
+trace_json("RESULT", [result.model_dump(mode="json") for result in resultados])
+trace_json("METRICS", {
+    "total": len(resultados),
+    "reliable": confiables,
+    "human_review_required": revisiones,
+    "wer_threshold": WER_THRESHOLD,
+})
 
 
 def main():

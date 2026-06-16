@@ -22,7 +22,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_text, run_generator
+from common import print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -132,6 +136,19 @@ def main() -> None:
     print("1. Agrega tres palabras legales y propone BPE/WordPiece.")
     print("2. Calcula cuanto sube O(N^2) al pasar de 1.000 a 4.000 tokens.")
     print("3. Discute cuando conviene chunking en vez de contexto gigante.")
+
+    trace_text("USER", "Tokenizá términos técnicos y estima el costo de attention.")
+    trace_json("EXTRACT", [
+        {
+            "word": row.word,
+            "word_level": row.word_level,
+            "char_level_count": len(row.char_level),
+            "bpe": row.bpe,
+            "wordpiece": row.wordpiece,
+        }
+        for row in rows
+    ])
+    trace_json("METRICS", [budget.model_dump(mode="json") for budget in budgets])
 
 
 if __name__ == "__main__":

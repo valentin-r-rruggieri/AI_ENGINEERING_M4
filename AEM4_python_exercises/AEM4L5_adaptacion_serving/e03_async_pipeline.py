@@ -24,7 +24,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, preview, read_text, run_generator
+from common import print_file_evidence, print_section, print_title, preview, read_text, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -120,6 +124,15 @@ def main() -> None:
     print("1. Agrega una etapa CPU-bound de tokenizacion pesada.")
     print("2. Demostra que async no acelera CPU-bound.")
     print("3. Combina abatch para I/O y ProcessPoolExecutor para CPU.")
+
+    trace_text("USER", "Resumí todos los documentos comparando ejecución secuencial vs async.")
+    trace_json("RESULT", [result.model_dump(mode="json") for result in async_results])
+    trace_json("METRICS", {
+        "sequential_seconds": t_seq,
+        "async_seconds": t_async,
+        "speedup": t_seq / t_async,
+        "documents": len(docs),
+    })
 
 
 if __name__ == "__main__":

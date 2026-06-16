@@ -23,7 +23,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, preview, read_text, run_generator
+from common import print_file_evidence, print_section, print_title, preview, read_text, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -122,6 +126,14 @@ def main() -> None:
     print("1. Evalua 4 perfiles: bajo, estable alto, batch y picos impredecibles.")
     print("2. Decide serverless, persistente o hibrido.")
     print("3. Agrega modelo 7B en RAM y revisa la decision.")
+
+    trace_text("USER", "Resumí documentos y medí latencia cold/warm del servicio.")
+    trace_json("RESULT", [response.model_dump(mode="json") for response in responses])
+    trace_json("METRICS", {
+        "cold_ms": cold,
+        "warm_min_ms": warm,
+        "cold_gt_warm": cold > warm,
+    })
 
 
 if __name__ == "__main__":

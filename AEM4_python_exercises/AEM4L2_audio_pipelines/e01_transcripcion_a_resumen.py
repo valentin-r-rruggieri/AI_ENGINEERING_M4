@@ -17,6 +17,8 @@ USE_REAL_API = True  → transcribe con Whisper real + LangChain summarize
 """
 
 import os
+import builtins
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +32,23 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
+
+
+def trace_text(role: str, payload: str) -> None:
+    if not QUIET:
+        builtins.print(f"{role}:")
+        builtins.print(payload)
+        builtins.print()
+
+
+def trace_json(role: str, payload) -> None:  # type: ignore[no-untyped-def]
+    trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
 USE_REAL_API  = False
 MODEL_NAME    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -306,6 +325,10 @@ print("""
      - LangChain enviará la transcripción a GPT-4o-mini
      - Recibirás el SupportCallSummary generado por el modelo real
 """)
+
+trace_text("USER", "Transcribí esta llamada de soporte y generá un resumen accionable.")
+trace_text("ASR", resultado_basico)
+trace_json("EXTRACT", resumen.model_dump(mode="json"))
 
 
 def main():

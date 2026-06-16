@@ -24,7 +24,11 @@ from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator
+from common import image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -164,6 +168,16 @@ def main() -> None:
     print("1. Usa adenda_compleja.png y compara 3 cambios.")
     print("2. Decide cuando ContextualizationAgent no hace falta.")
     print("3. Convierte el raw dict en ContractChangeOutput validado.")
+
+    trace_text("USER", "Compará contrato original y adenda simple. Extraé cambios contractuales.")
+    trace_text("LLM", mono)
+    trace_text("THINK", context_map)
+    trace_json("EXTRACT", raw)
+    trace_json("METRICS", {
+        "monolithic_score": score_sections(mono, expected),
+        "two_agent_score": score_sections(raw, expected),
+        "expected": expected,
+    })
 
 
 if __name__ == "__main__":

@@ -24,7 +24,11 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator
+from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -116,6 +120,19 @@ def main() -> None:
     print("1. Rechaza el caso complejo si falta alguna de las tres secciones esperadas.")
     print("2. Normaliza 'duracion' a 'duration'.")
     print("3. Agrega severity por cada cambio.")
+
+    validation_results = []
+    for name, payload in cases:
+        try:
+            obj = ContractChangeOutput(**payload)
+            validation_results.append({"case": name, "ok": True, "sections_changed": obj.sections_changed})
+        except ValidationError as exc:
+            validation_results.append({"case": name, "ok": False, "error": str(exc)})
+
+    trace_text("USER", "Extraé cambios contractuales con schema tipado.")
+    trace_text("LLM", free)
+    trace_json("EXTRACT", structured.model_dump(mode="json"))
+    trace_json("METRICS", validation_results)
 
 
 if __name__ == "__main__":

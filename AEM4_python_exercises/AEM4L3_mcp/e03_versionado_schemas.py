@@ -29,7 +29,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator
+from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -147,6 +151,16 @@ def main() -> None:
     print("1. Agrega referencia: Optional[str] a v2 y comproba que es MINOR.")
     print("2. Escribi el changelog de v1.0.0 a v2.0.0.")
     print("3. Decide cuanto tiempo mantener v1 activa.")
+
+    trace_json("USER", payload_viejo)
+    trace_json("THINK", {
+        "changes": [{"name": nombre, "impact": resultado[0], "bump": resultado[1]} for nombre, resultado in cambios],
+        "versioning_required": "MAJOR" in bumps,
+    })
+    trace_json("RESULT", {
+        "migrated_payload": migrado.model_dump(mode="json"),
+        "tool_call": choose_tool_version("transferi 1000 pesos a CBU-123"),
+    })
 
 
 if __name__ == "__main__":

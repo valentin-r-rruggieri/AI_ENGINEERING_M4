@@ -17,6 +17,8 @@ USE_REAL_API = True  → Whisper transcribe el WAV + LangChain evalúa
 """
 
 import os
+import builtins
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +32,23 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
+
+
+def trace_text(role: str, payload: str) -> None:
+    if not QUIET:
+        builtins.print(f"{role}:")
+        builtins.print(payload)
+        builtins.print()
+
+
+def trace_json(role: str, payload) -> None:  # type: ignore[no-untyped-def]
+    trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
 USE_REAL_API  = False
 MODEL_NAME    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -365,6 +384,18 @@ print("""
   3. (Con API key) Cambiá USE_REAL_API = True:
      Whisper transcribirá el WAV real y el modelo evaluará la calidad.
 """)
+
+trace_text("REFERENCE", REFERENCE)
+trace_text("ASR", HYPOTHESIS)
+trace_json("METRICS", {
+    "wer": evaluation.wer,
+    "substitutions": evaluation.substitutions,
+    "deletions": evaluation.deletions,
+    "insertions": evaluation.insertions,
+    "critical_error": evaluation.critical_error,
+    "domain_risk": evaluation.domain_risk,
+    "explanation": evaluation.explanation,
+})
 
 
 def main():

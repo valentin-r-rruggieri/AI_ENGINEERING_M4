@@ -26,7 +26,11 @@ from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_text, run_generator
+from common import print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -134,6 +138,17 @@ def main() -> None:
     print("1. Agrega pasos con time.sleep y encontra el mayor cumtime.")
     print("2. Decide que pasos van con async y cuales con multiprocessing.")
     print("3. Explica por que compilar regex una vez mejora CPU-bound.")
+
+    trace_text("USER", "Profileá el pipeline lento y comparalo contra la versión optimizada.")
+    trace_json("METRICS", {
+        "slow_seconds": slow,
+        "optimized_seconds": fast,
+        "speedup": slow / fast,
+        "classification": {
+            "regex": "CPU-bound",
+            "summarize_llm": "I/O-bound",
+        },
+    })
 
 
 if __name__ == "__main__":

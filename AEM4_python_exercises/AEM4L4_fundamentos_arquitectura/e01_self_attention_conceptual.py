@@ -26,7 +26,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_text, run_generator
+from common import print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -163,6 +167,16 @@ def main() -> None:
     print("1. Cambia la oracion por 'El gato vio el raton porque tenia hambre'.")
     print("2. Decide si 'tenia' atiende a gato o raton y justifica.")
     print("3. Genera un mapa similar para otra nota medica.")
+
+    trace_text("USER", sentence)
+    trace_json("THINK", {
+        "tokens": tokens,
+        "attention_row_sums": [round(float(x), 4) for x in attn.sum(axis=1)],
+    })
+    trace_json("EXTRACT", {
+        "sentence": dep.model_dump(mode="json"),
+        "medical": dep_medica.model_dump(mode="json"),
+    })
 
 
 if __name__ == "__main__":

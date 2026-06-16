@@ -19,6 +19,7 @@ USE_REAL_API = True  → envía las 3 imágenes a GPT-4o-mini + compara con expe
 import os
 import json
 import base64
+import builtins
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +35,20 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    """Silencia prints pedagógicos: la consola solo muestra trazas reales."""
+    return None
+
+
+def trace(role: str, payload: str) -> None:
+    if not QUIET:
+        builtins.print(f"{role}:")
+        builtins.print(payload)
+        builtins.print()
 
 USE_REAL_API = False
 MODEL_NAME   = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
@@ -273,6 +288,8 @@ for case in GOLDEN_CASES:
     image_path = DATA_DIR / case["image"]
     expected   = load_expected(case["image"])
     actual     = extract_from_image(image_path)
+    trace("USER", f"Analizá el formulario bancario `{case['image']}`. Devolvé campos estructurados, confidence y requires_human_review.")
+    trace("EXTRACT", json.dumps(actual, ensure_ascii=False, indent=2, default=str))
 
     result = CaseResult(
         case_id=case["id"],
@@ -293,6 +310,26 @@ avg_acc  = sum(r.accuracy for r in results) / len(results)
 avg_comp = sum(r.completeness for r in results) / len(results)
 schemas  = sum(1 for r in results if r.valid_schema)
 reviews  = sum(1 for r in results if r.human_review_correct)
+trace("METRICS", json.dumps({
+    "cases": [
+        {
+            "case_id": result.case_id,
+            "image_name": result.image_name,
+            "valid_schema": result.valid_schema,
+            "accuracy": result.accuracy,
+            "completeness": result.completeness,
+            "human_review_correct": result.human_review_correct,
+        }
+        for result in results
+    ],
+    "summary": {
+        "cases_evaluated": len(results),
+        "valid_schemas": schemas,
+        "human_review_correct": reviews,
+        "average_accuracy": avg_acc,
+        "average_completeness": avg_comp,
+    },
+}, ensure_ascii=False, indent=2))
 
 print("─" * 55)
 print("REPORTE FINAL:")
@@ -351,7 +388,6 @@ print("""
 
   (Con USE_REAL_API = True podés probarlo de verdad.)
 """)
-
 
 def main():
     pass

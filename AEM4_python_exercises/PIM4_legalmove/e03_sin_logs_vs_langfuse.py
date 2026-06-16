@@ -28,7 +28,11 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator
+from common import image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -84,6 +88,22 @@ class Trace:
             print(f"     out: {span.output_preview}")
             if span.error:
                 print(f"     err: {span.error}")
+
+    def model_dump(self) -> dict[str, Any]:
+        return {
+            "contract_id": self.contract_id,
+            "success": self.success,
+            "spans": [
+                {
+                    "name": span.name,
+                    "input_preview": span.input_preview,
+                    "output_preview": span.output_preview,
+                    "latency_ms": span.latency_ms,
+                    "error": span.error,
+                }
+                for span in self.spans
+            ],
+        }
 
 
 class ContractChangeOutput(BaseModel):
@@ -210,6 +230,19 @@ def main() -> None:
     print("1. Agrega modelo, version, tokens y trace_id a Span.")
     print("2. Envia la traza a Langfuse con USE_REAL_LANGFUSE=True.")
     print("3. Agrega un golden diff cuando la validacion pasa pero el contenido no coincide.")
+
+    trace_text("USER", "Procesá contrato y adenda compleja con trazabilidad por etapa.")
+    trace_json("TRACE", {
+        "ok": ok_trace.model_dump(),
+        "validation_error": bad_trace.model_dump(),
+    })
+    trace_json("METRICS", {
+        "ok_success": ok_trace.success,
+        "ok_spans": len(ok_trace.spans),
+        "bad_success": bad_trace.success,
+        "bad_last_span": bad_trace.spans[-1].name,
+        "bad_error": bad_trace.spans[-1].error,
+    })
 
 
 if __name__ == "__main__":

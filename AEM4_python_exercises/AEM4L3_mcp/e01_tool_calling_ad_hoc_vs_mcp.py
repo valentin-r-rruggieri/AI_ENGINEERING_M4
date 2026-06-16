@@ -31,7 +31,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator
+from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -178,6 +182,11 @@ def main() -> None:
     print("1. Agrega crear_pedido con required_scope ventas:pedido:crear.")
     print("2. Explica por que crear_pedido requiere mas privilegios que buscar_producto.")
     print("3. Clasifica tres elementos nuevos como Tool, Resource o Prompt.")
+
+    trace_text("USER", query)
+    trace_text("LLM", libre)
+    trace_json("TOOL_CALL", tool_call)
+    trace_json("RESULT", resultado)
 
 
 if __name__ == "__main__":

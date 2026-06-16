@@ -24,7 +24,11 @@ from pydantic import BaseModel, Field, ValidationError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator
+from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -112,8 +116,10 @@ def main() -> None:
     print_section(4, "VERSION MEJORADA - LoRA + ADR")
     print(f"LoRA: modelo base {model_gb} GB + {clients} adapters x {adapter_gb} GB = {storage_lora(model_gb, adapter_gb, clients):.1f} GB")
     print("Tabla de decision: un dominio + alto presupuesto -> Full FT; multi-cliente o bajo presupuesto -> LoRA; picos + calidad -> Hybrid.")
+    adrs = []
     for profile in profiles:
         adr = generate_adr(profile)
+        adrs.append(adr)
         print(f"\nADR - {profile['cliente']}")
         print(f"  Decision: {adr.decision}")
         print(f"  Contexto: {adr.context}")
@@ -141,6 +147,16 @@ def main() -> None:
     print("1. Agrega un perfil hibrido con picos de trafico y varios dominios.")
     print("2. Agrega costo_estimado_gpu_hours al schema.")
     print("3. Defende cuando Full FT sigue siendo razonable.")
+
+    trace_text("USER", "Compará Full Fine-Tuning vs LoRA para 50 clientes y generá ADRs por perfil.")
+    trace_json("METRICS", {
+        "full_finetuning_storage_gb": storage_full_ft(model_gb, clients),
+        "lora_storage_gb": storage_lora(model_gb, adapter_gb, clients),
+        "clients": clients,
+        "model_gb": model_gb,
+        "adapter_gb": adapter_gb,
+    })
+    trace_json("EXTRACT", [adr.model_dump(mode="json") for adr in adrs])
 
 
 if __name__ == "__main__":

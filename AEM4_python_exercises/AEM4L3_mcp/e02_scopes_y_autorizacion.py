@@ -29,7 +29,11 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_json, run_generator
+from common import print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 load_dotenv()
 
@@ -158,6 +162,13 @@ def main() -> None:
     print("1. Modela un MCP de RRHH con leer_perfil, actualizar_salario y plantilla_email.")
     print("2. Asigna scopes con dominio:objeto:accion.")
     print("3. Agrega un audit log para intentos permitidos y denegados.")
+
+    trace_text("USER", injection)
+    trace_json("TOOL_CALL", tool_call)
+    trace_json("THINK", {
+        role: execute_with_gate(tool_call, role, registry, roles)
+        for role in ["viewer", "operator", "admin"]
+    })
 
 
 if __name__ == "__main__":

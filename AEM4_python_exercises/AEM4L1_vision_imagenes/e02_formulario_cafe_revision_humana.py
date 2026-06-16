@@ -18,6 +18,8 @@ USE_REAL_API = True  → envía la imagen manchada a GPT-4o-mini → respuesta r
 
 import os
 import base64
+import builtins
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -32,6 +34,20 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    """Silencia prints pedagógicos: la consola solo muestra trazas reales."""
+    return None
+
+
+def trace(role: str, payload: str) -> None:
+    if not QUIET:
+        builtins.print(f"{role}:")
+        builtins.print(payload)
+        builtins.print()
 
 USE_REAL_API   = False
 MODEL_NAME     = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
@@ -115,6 +131,11 @@ def bad_extraction_confabulates(image_path: Path) -> dict:
 
 
 resultado_malo = bad_extraction_confabulates(IMAGE_CAFE)
+trace(
+    "USER",
+    "Extraé TODOS los datos del formulario bancario. Devolvé JSON con: full_name, document_number, requested_amount, birth_date, signature_present.",
+)
+trace("LLM", json.dumps(resultado_malo, ensure_ascii=False, indent=2))
 print("Output (modelo que confabula):")
 for k, v in resultado_malo.items():
     print(f"  {k}: {v}")
@@ -261,6 +282,14 @@ def safe_extraction_honest(image_path: Path) -> BankApplicationWithConfidence:
 
 print()
 app_segura = safe_extraction_honest(IMAGE_CAFE)
+trace(
+    "USER",
+    (
+        "Analizá este formulario bancario. Si algún campo está cubierto, borroso o no es legible, "
+        "devolvé null para ese campo. Indicá confidence, extraction_notes y requires_human_review."
+    ),
+)
+trace("EXTRACT", app_segura.model_dump_json(indent=2))
 print()
 print("Output honesto (campos tapados → None):")
 print(f"  full_name:             {app_segura.full_name}")
@@ -294,6 +323,12 @@ def route_application(app: BankApplicationWithConfidence) -> tuple[str, str]:
 
 
 destino, motivo = route_application(app_segura)
+trace("THINK", json.dumps({
+    "routing": {
+        "destination": destino,
+        "reason": motivo,
+    }
+}, ensure_ascii=False, indent=2))
 print(f"Resultado del routing: {destino}")
 print(f"Motivo: {motivo}")
 
@@ -374,7 +409,6 @@ print("""
   Luego abrí formulario_bancario_cafe.png y formulario_bancario_borroso.png
   y observá la diferencia visual → ¿cuál sería "damaged" y cuál "unreadable"?
 """)
-
 
 def main():
     pass

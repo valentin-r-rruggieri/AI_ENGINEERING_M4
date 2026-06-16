@@ -19,6 +19,7 @@ USE_REAL_API = True:
 
 import os
 import base64
+import builtins
 import subprocess
 import sys
 from pathlib import Path
@@ -33,6 +34,20 @@ if callable(reconfigure_stdout):
     reconfigure_stdout(encoding="utf-8", errors="replace")
 
 load_dotenv()
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    """Silencia prints pedagógicos: la consola solo muestra trazas reales."""
+    return None
+
+
+def trace(role: str, payload: str) -> None:
+    if not QUIET:
+        builtins.print(f"{role}:")
+        builtins.print(payload)
+        builtins.print()
 
 # ── Configuración ──────────────────────────────────────────────
 USE_REAL_API   = False
@@ -114,6 +129,8 @@ def basic_extraction_free_text(image_path: Path) -> str:
 
 
 texto_libre = basic_extraction_free_text(IMAGE_PATH)
+trace("USER", "Describí qué ves en este formulario bancario.")
+trace("LLM", texto_libre)
 print(f"Output texto libre:\n  '{texto_libre}'")
 
 print()
@@ -227,6 +244,15 @@ def structured_extraction(image_path: Path) -> BankApplication:
 
 
 application = structured_extraction(IMAGE_PATH)
+trace(
+    "USER",
+    (
+        "Analizá esta imagen de un formulario bancario y extraé los datos solicitados. "
+        "Si un campo no es legible, devolvé null. "
+        "El document_number debe ser solo los dígitos, sin puntos ni espacios."
+    ),
+)
+trace("EXTRACT", application.model_dump_json(indent=2))
 print()
 print("Output estructurado (BankApplication validada por Pydantic):")
 print(f"  full_name:         {application.full_name}")
@@ -311,7 +337,6 @@ print("""
      copiá .env.example a .env, completá OPENAI_API_KEY y ejecutá.
      ¿El modelo lee correctamente el formulario PNG generado?
 """)
-
 
 def main():
     pass

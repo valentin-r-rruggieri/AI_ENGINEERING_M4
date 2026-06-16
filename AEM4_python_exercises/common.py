@@ -3,11 +3,32 @@
 from __future__ import annotations
 
 import base64
+import builtins
 import json
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+
+QUIET = "--quiet" in sys.argv
+
+
+def print(*args, **kwargs):  # type: ignore[no-untyped-def]
+    """Silencia prints pedagógicos importados desde common."""
+    return None
+
+
+def trace_text(role: str, payload: str) -> None:
+    if QUIET:
+        return
+    builtins.print(f"{role}:")
+    builtins.print(payload)
+    builtins.print()
+
+
+def trace_json(role: str, payload: Any) -> None:
+    trace_text(role, json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
 
 def run_generator(data_dir: Path, script_name: str, required_path: Path) -> None:
