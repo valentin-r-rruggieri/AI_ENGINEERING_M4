@@ -1,22 +1,24 @@
 """
-Script de generación de archivos de audio de ejemplo para AEM4L2.
+Genera archivos de audio hablados para AEM4L2.
 
-Crea 3 archivos .wav con tonos variados (simulan voces) + transcripciones de referencia.
+Este script crea 3 archivos .wav con voz sintetica real usando el TTS local
+de macOS (`say`) y los convierte a WAV con `afconvert`.
 
-  llamada_soporte.wav       → reclamo de entrega no recibida
-  indicacion_medica.wav     → prescripción médica dictada
-  reunion_equipo.wav        → resumen de reunión de equipo
+No genera tonos ni ruido: los audios contienen las frases de los transcripts.
 
-Ejecutar con:
-    python AEM4L2_audio_pipelines/data/generate_audio.py
+Archivos:
+  llamada_soporte.wav       -> reclamo de entrega no recibida
+  indicacion_medica.wav     -> indicacion medica dictada
+  reunion_equipo.wav        -> resumen de reunion de equipo
 
-Requiere: numpy, scipy (o solo wave de stdlib como fallback)
+Ejecutar desde la raiz del repo:
+    python3 AEM4_python_exercises/AEM4L2_audio_pipelines/data/generate_audio.py
 """
 
-import wave
-import struct
-import math
-import os
+from __future__ import annotations
+
+import shutil
+import subprocess
 from pathlib import Path
 
 OUTPUT_DIR = Path(__file__).parent
@@ -24,89 +26,107 @@ TRANSCRIPTS_DIR = OUTPUT_DIR / "transcripts"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
 
-SAMPLE_RATE = 22050   # Hz — calidad suficiente para ASR
+# Voz en espanol disponible en macOS. Si no existe, el script busca otra voz
+# espanola instalada y, como ultimo recurso, usa la voz default del sistema.
+PREFERRED_VOICE = "Mónica"
+SAMPLE_RATE = 22050
 
-# Transcripciones de referencia (ground truth)
+# Transcripciones de referencia. Son el ground truth que usamos para medir WER.
 TRANSCRIPTS = {
     "llamada_soporte": (
-        "Hola buenos días llamo porque el pedido número cuatro cinco dos uno no llegó "
-        "lo necesitaba para hoy y es muy urgente quiero saber si pueden enviarlo urgente "
-        "o si tienen que cancelar la compra por favor necesito una solución rápida"
+        "Hola, buenos días. Llamo porque el pedido número cuatro cinco dos uno no llegó. "
+        "Lo necesitaba para hoy y es muy urgente. Quiero saber si pueden enviarlo urgente "
+        "o si tienen que cancelar la compra. Por favor, necesito una solución rápida."
     ),
     "indicacion_medica": (
-        "El paciente debe tomar la medicación cada ocho horas durante siete días "
-        "la dosis es de quinientos miligramos no superar los tres gramos diarios "
-        "en caso de reacción adversa suspender inmediatamente y consultar al médico"
+        "El paciente debe tomar la medicación cada ocho horas durante siete días. "
+        "La dosis es de quinientos miligramos. No superar los tres gramos diarios. "
+        "En caso de reacción adversa, suspender inmediatamente y consultar al médico."
     ),
     "reunion_equipo": (
-        "En la reunión de hoy acordamos que el sprint termina el viernes "
-        "los tres puntos principales son primero revisar los pull requests pendientes "
-        "segundo actualizar la documentación de la API "
-        "tercero coordinar con el equipo de diseño los nuevos mockups para el dashboard"
+        "En la reunión de hoy acordamos que el sprint termina el viernes. "
+        "Los tres puntos principales son: primero, revisar los pull requests pendientes. "
+        "Segundo, actualizar la documentación de la API. "
+        "Tercero, coordinar con el equipo de diseño los nuevos mockups para el dashboard."
     ),
 }
 
 
-def create_speech_like_wav(filename: Path, transcript: str, duration_s: float = 5.0) -> None:
-    """
-    Crea un archivo WAV con tonos variados que simulan patrones de habla.
-    NO es voz real — es un placeholder válido para demostrar el pipeline.
-    El transcript de referencia contiene el texto real.
-    """
-    n_samples = int(SAMPLE_RATE * duration_s)
+def require_command(command: str) -> str:
+    # Falla temprano con un mensaje claro si falta una herramienta de macOS.
+    path = shutil.which(command)
+    if path is None:
+        raise RuntimeError(f"No encontre `{command}`. En macOS deberia venir instalado.")
+    return path
 
-    # Generar tonos variados que imitan la cadencia del habla
-    words = transcript.split()
-    samples = []
 
-    for i in range(n_samples):
-        t = i / SAMPLE_RATE
-        # Frecuencia base de voz (~150–300 Hz para habla masculina/femenina)
-        word_idx = int(t / duration_s * len(words))
-        # Variar la frecuencia por palabra para simular prosodia
-        base_freq = 180 + (hash(words[min(word_idx, len(words) - 1)]) % 100)
-        # Añadir armónicos para que suene más natural
-        value = (
-            0.5  * math.sin(2 * math.pi * base_freq * t) +
-            0.25 * math.sin(2 * math.pi * base_freq * 2 * t) +
-            0.15 * math.sin(2 * math.pi * base_freq * 3 * t)
-        )
-        # Envolvente de amplitud (ataque y decay suave)
-        envelope = min(t / 0.1, 1.0) * min((duration_s - t) / 0.1, 1.0)
-        value *= envelope * 0.6
-        samples.append(int(32767 * value))
+def available_spanish_voice() -> str | None:
+    # `say -v ?` lista voces. Buscamos una voz espanola instalada.
+    result = subprocess.run(
+        ["say", "-v", "?"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    voices = result.stdout.splitlines()
+    if any(line.startswith(PREFERRED_VOICE) for line in voices):
+        return PREFERRED_VOICE
+    for line in voices:
+        if "es_ES" in line or "es_MX" in line or "Español" in line:
+            return line.split()[0]
+    return None
 
-    with wave.open(str(filename), 'w') as f:
-        f.setnchannels(1)     # mono
-        f.setsampwidth(2)     # 16-bit PCM
-        f.setframerate(SAMPLE_RATE)
-        packed = struct.pack(f"<{len(samples)}h", *samples)
-        f.writeframes(packed)
+
+def synthesize_with_macos_say(text: str, wav_path: Path, voice: str | None) -> None:
+    # `say` produce AIFF. Luego `afconvert` lo convierte a WAV PCM 16-bit mono.
+    aiff_path = wav_path.with_suffix(".aiff")
+    say_cmd = ["say"]
+    if voice:
+        say_cmd.extend(["-v", voice])
+    say_cmd.extend(["-o", str(aiff_path), text])
+    subprocess.run(say_cmd, check=True)
+
+    subprocess.run(
+        [
+            "afconvert",
+            "-f",
+            "WAVE",
+            "-d",
+            f"LEI16@{SAMPLE_RATE}",
+            str(aiff_path),
+            str(wav_path),
+        ],
+        check=True,
+    )
+    aiff_path.unlink(missing_ok=True)
 
 
 def main() -> None:
-    print("Generando archivos de audio de ejemplo...")
+    require_command("say")
+    require_command("afconvert")
+    voice = available_spanish_voice()
+
+    print("Generando audios hablados de ejemplo...")
+    print(f"Voz TTS: {voice or 'default del sistema'}")
 
     for name, transcript in TRANSCRIPTS.items():
-        # Crear WAV
         wav_path = OUTPUT_DIR / f"{name}.wav"
-        duration = max(4.0, len(transcript.split()) * 0.4)  # ~0.4s por palabra
-        create_speech_like_wav(wav_path, transcript, duration_s=duration)
-        print(f"  OK {wav_path.name}  ({duration:.1f}s, {len(transcript.split())} palabras)")
-
-        # Guardar transcript de referencia
         txt_path = TRANSCRIPTS_DIR / f"{name}_reference.txt"
+
+        synthesize_with_macos_say(transcript, wav_path, voice)
         txt_path.write_text(transcript, encoding="utf-8")
+
+        size_kb = wav_path.stat().st_size // 1024
+        print(f"  OK {wav_path.name} ({size_kb} KB)")
         print(f"  OK transcripts/{txt_path.name}")
 
     print(f"\nArchivos guardados en: {OUTPUT_DIR}")
-    print("""
-NOTA:
-  Los archivos .wav contienen tonos sintéticos (no voz real).
-  El pipeline ASR usa los archivos de referencia .txt como ground truth.
-  Para audio real: reemplazá los .wav con grabaciones propias
-  y actualizá los archivos de referencia con la transcripción correcta.
-""")
+    print(
+        "\nNOTA:\n"
+        "  Los WAV ahora contienen voz sintetica hablada, no tonos ni ruido.\n"
+        "  Los .txt son referencias humanas para calcular WER.\n"
+        "  Si queres usar llamadas reales, reemplaza los WAV y actualiza su transcript de referencia.\n"
+    )
 
 
 if __name__ == "__main__":

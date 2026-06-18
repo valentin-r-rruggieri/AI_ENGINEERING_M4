@@ -1,5 +1,5 @@
 """
-E02 — WER y error crítico en ASR médico
+E05 — WER y error crítico en ASR médico
 AEM4L2 | Audio Pipelines
 
 Objetivo pedagógico:
@@ -71,7 +71,7 @@ ensure_data()
 # ============================================================
 
 print("=" * 60)
-print("AEM4L2 | E02 — WER y error crítico en ASR médico")
+print("AEM4L2 | E05 — WER y error crítico en ASR médico")
 print("=" * 60)
 
 # Leer transcripción de referencia

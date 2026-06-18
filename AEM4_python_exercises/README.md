@@ -55,7 +55,7 @@ Los scripts fallan temprano si falta la API key, para que la clase use siempre e
 | Módulo | Objetivo |
 |---|---|
 | **AEM4L1** | Pasar de imagen → descripción libre → JSON mínimo → Pydantic completo |
-| **AEM4L2** | Transcribir → medir calidad (WER) → pipeline confiable |
+| **AEM4L2** | Audio → transcripción → resumen libre → JSON mínimo → WER → gate confiable |
 | **AEM4L3** | Wrappers ad hoc → contrato MCP → scopes + versionado |
 | **AEM4L4** | Intuir self-attention → tokenización → decisiones LoRA vs FT |
 | **AEM4L5** | Elegir arquitectura de serving → profiling → async pipeline |

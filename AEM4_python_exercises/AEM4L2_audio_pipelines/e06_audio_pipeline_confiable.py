@@ -1,5 +1,5 @@
 """
-E03 — Pipeline de audio confiable con gate de calidad
+E06 — Pipeline de audio confiable con gate de calidad
 AEM4L2 | Audio Pipelines
 
 Objetivo pedagógico:
@@ -73,7 +73,7 @@ ensure_data()
 # ============================================================
 
 print("=" * 60)
-print("AEM4L2 | E03 — Pipeline de audio confiable")
+print("AEM4L2 | E06 — Pipeline de audio confiable")
 print("=" * 60)
 print(f"""
 CASO:
@@ -119,7 +119,7 @@ print("  Problema: el tercer resumen es basura pero el agente no lo sabe.")
 
 
 # ============================================================
-# 3. WER reutilizado del E02
+# 3. WER reutilizado del E05
 # ============================================================
 
 def tokenize(text: str) -> List[str]:

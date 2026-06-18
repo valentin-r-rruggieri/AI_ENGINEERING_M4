@@ -1,5 +1,5 @@
 """
-E01 — De audio WAV a resumen accionable con LangChain
+E04 — De audio WAV a resumen accionable con LangChain
 AEM4L2 | Audio Pipelines
 
 Objetivo pedagógico:
@@ -71,7 +71,7 @@ ensure_data()
 # ============================================================
 
 print("=" * 60)
-print("AEM4L2 | E01 — De audio a resumen accionable")
+print("AEM4L2 | E04 — De audio a resumen accionable")
 print("=" * 60)
 print(f"""
 CASO:
