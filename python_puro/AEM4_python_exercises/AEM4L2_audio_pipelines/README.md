@@ -6,6 +6,18 @@ Entender que transcribir no alcanza: hay que medir la calidad de la transcripci�
 
 Los audios de `data/*.wav` son voces TTS habladas generadas localmente para la práctica. No son llamadas humanas reales, pero sí contienen voz transcribible por Whisper. Los archivos `data/transcripts/*.txt` son la referencia humana/esperada para calcular WER.
 
+Además de los audios base, `data/` incluye variantes degradadas para comparar cómo cambia la transcripción cuando el audio está en mal estado. Todas las variantes usan el mismo transcript de referencia del audio base.
+
+| Sufijo | Problema que simula | Ejemplo |
+|---|---|---|
+| `_ruido.wav` | Ruido blanco de fondo | `llamada_soporte_ruido.wav` |
+| `_rapido.wav` | Habla acelerada | `llamada_soporte_rapido.wav` |
+| `_entrecortado.wav` | Microcortes/silencios breves | `llamada_soporte_entrecortado.wav` |
+| `_pausas.wav` | Pausas largas entre segmentos | `llamada_soporte_pausas.wav` |
+| `_mal_estado.wav` | Ruido + volumen bajo + cortes | `llamada_soporte_mal_estado.wav` |
+
+Para probarlos en cualquier ejercicio, cambiá el `AUDIO_PATH` por una variante y dejá el mismo archivo de referencia en `data/transcripts/`. El detalle completo está en `data/audio_variants_manifest.json`.
+
 ---
 
 ## Ejercicios
@@ -53,6 +65,6 @@ python AEM4L2_audio_pipelines/e06_audio_pipeline_confiable.py
 
 - **ASR (Automatic Speech Recognition):** convierte audio en texto (Whisper, DeepSpeech).
 - **WER (Word Error Rate):** `(S + D + I) / N` — mide cuántas palabras están mal.
-- **S/D/I:** Sustituciones / Deleciones / Insercciones.
+- **S/D/I:** Sustituciones / Deleciones / Inserciones.
 - **Error crítico:** un error con bajo impacto en WER pero alto impacto en el dominio (ej: "ocho" → "dos" en dosis médica).
 - **Reliability gate:** si WER supera un umbral, no generar resumen automático.

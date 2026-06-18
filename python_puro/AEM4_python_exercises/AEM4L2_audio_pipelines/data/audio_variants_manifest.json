@@ -1,0 +1,110 @@
+{
+  "nota": "Todas las variantes usan el mismo transcript de referencia del audio base. Cambia solo AUDIO_PATH para comparar ASR/WER.",
+  "variants": [
+    {
+      "file": "llamada_soporte_ruido.wav",
+      "base_audio": "llamada_soporte.wav",
+      "reference_transcript": "transcripts/llamada_soporte_reference.txt",
+      "problem": "ruido",
+      "description": "Mismo contenido con ruido blanco de fondo."
+    },
+    {
+      "file": "llamada_soporte_rapido.wav",
+      "base_audio": "llamada_soporte.wav",
+      "reference_transcript": "transcripts/llamada_soporte_reference.txt",
+      "problem": "rapido",
+      "description": "Mismo contenido acelerado para simular habla muy rapida."
+    },
+    {
+      "file": "llamada_soporte_entrecortado.wav",
+      "base_audio": "llamada_soporte.wav",
+      "reference_transcript": "transcripts/llamada_soporte_reference.txt",
+      "problem": "entrecortado",
+      "description": "Mismo contenido con microcortes y silencios cortos."
+    },
+    {
+      "file": "llamada_soporte_pausas.wav",
+      "base_audio": "llamada_soporte.wav",
+      "reference_transcript": "transcripts/llamada_soporte_reference.txt",
+      "problem": "pausas",
+      "description": "Mismo contenido con pausas largas insertadas."
+    },
+    {
+      "file": "llamada_soporte_mal_estado.wav",
+      "base_audio": "llamada_soporte.wav",
+      "reference_transcript": "transcripts/llamada_soporte_reference.txt",
+      "problem": "mal_estado",
+      "description": "Ruido, volumen bajo y cortes combinados."
+    },
+    {
+      "file": "indicacion_medica_ruido.wav",
+      "base_audio": "indicacion_medica.wav",
+      "reference_transcript": "transcripts/indicacion_medica_reference.txt",
+      "problem": "ruido",
+      "description": "Mismo contenido con ruido blanco de fondo."
+    },
+    {
+      "file": "indicacion_medica_rapido.wav",
+      "base_audio": "indicacion_medica.wav",
+      "reference_transcript": "transcripts/indicacion_medica_reference.txt",
+      "problem": "rapido",
+      "description": "Mismo contenido acelerado para simular habla muy rapida."
+    },
+    {
+      "file": "indicacion_medica_entrecortado.wav",
+      "base_audio": "indicacion_medica.wav",
+      "reference_transcript": "transcripts/indicacion_medica_reference.txt",
+      "problem": "entrecortado",
+      "description": "Mismo contenido con microcortes y silencios cortos."
+    },
+    {
+      "file": "indicacion_medica_pausas.wav",
+      "base_audio": "indicacion_medica.wav",
+      "reference_transcript": "transcripts/indicacion_medica_reference.txt",
+      "problem": "pausas",
+      "description": "Mismo contenido con pausas largas insertadas."
+    },
+    {
+      "file": "indicacion_medica_mal_estado.wav",
+      "base_audio": "indicacion_medica.wav",
+      "reference_transcript": "transcripts/indicacion_medica_reference.txt",
+      "problem": "mal_estado",
+      "description": "Ruido, volumen bajo y cortes combinados."
+    },
+    {
+      "file": "reunion_equipo_ruido.wav",
+      "base_audio": "reunion_equipo.wav",
+      "reference_transcript": "transcripts/reunion_equipo_reference.txt",
+      "problem": "ruido",
+      "description": "Mismo contenido con ruido blanco de fondo."
+    },
+    {
+      "file": "reunion_equipo_rapido.wav",
+      "base_audio": "reunion_equipo.wav",
+      "reference_transcript": "transcripts/reunion_equipo_reference.txt",
+      "problem": "rapido",
+      "description": "Mismo contenido acelerado para simular habla muy rapida."
+    },
+    {
+      "file": "reunion_equipo_entrecortado.wav",
+      "base_audio": "reunion_equipo.wav",
+      "reference_transcript": "transcripts/reunion_equipo_reference.txt",
+      "problem": "entrecortado",
+      "description": "Mismo contenido con microcortes y silencios cortos."
+    },
+    {
+      "file": "reunion_equipo_pausas.wav",
+      "base_audio": "reunion_equipo.wav",
+      "reference_transcript": "transcripts/reunion_equipo_reference.txt",
+      "problem": "pausas",
+      "description": "Mismo contenido con pausas largas insertadas."
+    },
+    {
+      "file": "reunion_equipo_mal_estado.wav",
+      "base_audio": "reunion_equipo.wav",
+      "reference_transcript": "transcripts/reunion_equipo_reference.txt",
+      "problem": "mal_estado",
+      "description": "Ruido, volumen bajo y cortes combinados."
+    }
+  ]
+}
