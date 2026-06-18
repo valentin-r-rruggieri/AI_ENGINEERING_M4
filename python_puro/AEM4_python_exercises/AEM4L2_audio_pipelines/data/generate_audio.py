@@ -12,7 +12,7 @@ Archivos:
   reunion_equipo.wav        -> resumen de reunion de equipo
 
 Ejecutar desde la raiz del repo:
-    python3 AEM4_python_exercises/AEM4L2_audio_pipelines/data/generate_audio.py
+    python3 python_puro/AEM4_python_exercises/AEM4L2_audio_pipelines/data/generate_audio.py
 """
 
 from __future__ import annotations

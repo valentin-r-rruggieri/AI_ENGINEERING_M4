@@ -18,15 +18,18 @@ from typing import List, cast
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT_DIR))
+# PIM vive fuera de python_puro para que el proyecto integrador quede separado,
+# pero reutiliza las utilidades y el .env comun de los ejercicios Python.
+REPO_DIR = Path(__file__).resolve().parents[3]
+COMMON_DIR = REPO_DIR / "python_puro" / "AEM4_python_exercises"
+sys.path.insert(0, str(COMMON_DIR))
 from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
 
 
 def print(*args, **kwargs):  # type: ignore[no-untyped-def]
     return None
 
-load_dotenv()
+load_dotenv(COMMON_DIR / ".env")
 require_openai_api_key()
 
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")

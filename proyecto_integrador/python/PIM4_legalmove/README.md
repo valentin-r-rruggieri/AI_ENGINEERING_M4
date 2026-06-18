@@ -18,10 +18,12 @@ Integrar todo lo aprendido en el módulo en un pipeline real: comparación de co
 
 ## Cómo ejecutar
 
+Desde la raíz del repositorio:
+
 ```bash
-python PIM4_legalmove/e01_comparador_basico_vs_agentes.py
-python PIM4_legalmove/e02_output_libre_vs_pydantic.py
-python PIM4_legalmove/e03_sin_logs_vs_langfuse.py
+python proyecto_integrador/python/PIM4_legalmove/e01_comparador_basico_vs_agentes.py
+python proyecto_integrador/python/PIM4_legalmove/e02_output_libre_vs_pydantic.py
+python proyecto_integrador/python/PIM4_legalmove/e03_sin_logs_vs_langfuse.py
 ```
 
 ---

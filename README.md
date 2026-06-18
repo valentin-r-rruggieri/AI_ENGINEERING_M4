@@ -8,22 +8,27 @@ Módulo 4 del programa **AI Engineering** enfocado en pipelines multimodales (vi
 
 ```
 AI_ENGINEERING_M4/
-├── AEM4L1_IA_que_ve_y_crea_vision_e_imagenes/    # Visión + extracción estructurada
-├── AEM4L2_Introduccion_a_audio_pipelines/         # ASR + WER + transcripción
-├── AEM4L3_Introduccion_a_los_MCP/                 # Model Context Protocol
-├── AEM4L4_Fundamentos_teoricos_y_arquitectura/    # Transformers, atención, tokenización
-├── AEM4L5_Arquitecturas_avanzadas_de_adaptacion/  # LoRA, despliegue, profiling, asyncio
-├── PIM4_Proyecto_Integrador_LegalMove/            # Proyecto integrador (contratos legales)
-├── GUION_AEM4L1_Vision_Imagenes.md
-├── GUION_AEM4L2_Audio_Pipelines.md
-├── GUION_AEM4L3_MCP.md
-├── GUION_AEM4L4_Fundamentos_Teoricos.md
-├── GUION_AEM4L5_Arquitecturas_Avanzadas.md
-├── GUION_PIM4_LegalMove.md
+├── notebooks/
+│   ├── AEM4L1_IA_que_ve_y_crea_vision_e_imagenes/          # Notebooks de visión
+│   ├── AEM4L2_Introduccion_a_audio_pipelines/               # Notebooks de audio
+│   ├── AEM4L3_Introduccion_a_los_MCP/                       # Notebooks de MCP
+│   ├── AEM4L4_Fundamentos_teoricos_y_arquitectura/          # Notebooks de transformers
+│   └── AEM4L5_Arquitecturas_avanzadas_de_adaptacion/        # Notebooks de adaptación/serving
+├── python_puro/
+│   └── AEM4_python_exercises/
+│       ├── AEM4L1_vision_imagenes/                          # Scripts Python de visión
+│       ├── AEM4L2_audio_pipelines/                          # Scripts Python de audio
+│       ├── AEM4L3_mcp/                                      # Scripts Python de MCP
+│       ├── AEM4L4_fundamentos_arquitectura/                 # Scripts Python de fundamentos
+│       └── AEM4L5_adaptacion_serving/                       # Scripts Python de serving
+├── proyecto_integrador/
+│   ├── notebooks/PIM4_Proyecto_Integrador_LegalMove/        # Notebooks del PIM
+│   └── python/PIM4_legalmove/                               # Scripts Python del PIM
+├── guiones_clases_practicas/                                # Guiones privados, ignorados por Git
 └── README.md
 ```
 
-Cada carpeta contiene **8 notebooks** `.ipynb` compatibles con Google Colab:
+Las carpetas de `notebooks/` y `proyecto_integrador/notebooks/` contienen **8 notebooks** `.ipynb` compatibles con Google Colab:
 
 | Ejercicio | Tipo | Descripción |
 |-----------|------|-------------|
@@ -36,7 +41,7 @@ Cada carpeta contiene **8 notebooks** `.ipynb` compatibles con Google Colab:
 | E07 | Inicial | Warm-up mínimo |
 | E08 | Avanzado | Ejercicio cumbre del módulo |
 
-**Total: 48 notebooks** listos para Google Colab.
+**Total: 48 notebooks** listos para Google Colab: 40 de clases AEM4L1-L5 y 8 del proyecto integrador.
 
 ---
 
@@ -165,7 +170,10 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 
 - `AEM4L{X}_{nombre}` — Lección X del módulo 4
 - `PIM4_{nombre}` — Proyecto integrador del módulo 4
-- `GUION_AEM4L{X}_{nombre}.md` — Guión/docencia de cada lección
+- `notebooks/` — notebooks didácticos por clase
+- `python_puro/AEM4_python_exercises/` — ejercicios `.py` ejecutables por clase
+- `proyecto_integrador/` — notebooks y scripts del PIM separados del material regular
+- `guiones_clases_practicas/` — guiones docentes privados, ignorados por Git
 - `E{NN}_{tipo}_{descripcion}.ipynb` — Notebooks con número secuencial
 
 ---
@@ -174,7 +182,9 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 
 - Google Colab (recomendado) o Jupyter Notebook
 - Python 3.10+
-- Las notebooks usan funciones mock — no requieren API keys para ejecución en clase
+- Las notebooks son material didáctico autocontenido.
+- Los scripts de `python_puro/` y `proyecto_integrador/python/` usan API real de OpenAI cuando llaman modelos.
+- Para los scripts con LLM o Whisper, configurar `OPENAI_API_KEY` en `python_puro/AEM4_python_exercises/.env`.
 
 ---
 
