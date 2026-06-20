@@ -3,44 +3,47 @@ E02 - Tokenizacion subword y costo de contexto
 AEM4L4 | Fundamentos teoricos y arquitectura
 
 Objetivo pedagogico:
-    Mostrar por que word-level produce [UNK], como BPE/WordPiece reconstruyen
-    terminos raros y por que mas tokens implican mas costo O(N^2).
-
-Nota:
-    Este ejercicio no llama al LLM porque el nucleo es matematico:
-    tokenizacion, subwords y costo de contexto.
+    Comparar word-level, character-level, BPE y WordPiece con terminos
+    tecnicos, y conectar fragmentacion con costo aproximado de attention.
 """
 
 from __future__ import annotations
 
-import os
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
-from pydantic import BaseModel, Field, ValidationError
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT_DIR))
-from common import print_file_evidence, print_section, print_title, read_text, run_generator, trace_json, trace_text
-
-
-def print(*args, **kwargs):  # type: ignore[no-untyped-def]
-    return None
-
-load_dotenv()
-
-MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 LEGAL_PATH = DATA_DIR / "contrato_legal.txt"
+VOCAB = {"cat", "contrato", "pago", "monto", "plazo", "paciente", "banco", "la", "el", "de", "servicios"}
+
+
+@dataclass
+class TokenizationRow:
+    word: str
+    word_level: list[str]
+    char_level: list[str]
+    bpe: list[str]
+    wordpiece: list[str]
+
+
+def title(text: str) -> None:
+    print("\n" + "=" * 78)
+    print(text)
+    print("=" * 78)
+
+
+def section(number: int, text: str) -> None:
+    print(f"\n{number}. {text}")
+    print("-" * 78)
 
 
 def ensure_data() -> None:
-    run_generator(DATA_DIR, "generate_data.py", LEGAL_PATH)
-
-
-VOCAB = {"contrato", "pago", "monto", "plazo", "paciente", "banco", "la", "el", "de", "servicios"}
+    if LEGAL_PATH.exists():
+        return
+    subprocess.run([sys.executable, str(DATA_DIR / "generate_data.py")], check=True)
 
 
 def word_tokenize(word: str) -> list[str]:
@@ -53,102 +56,66 @@ def char_tokenize(word: str) -> list[str]:
 
 def fake_bpe(word: str) -> list[str]:
     mapping = {
+        "hypercholesterolemia": ["hyper", "cholesterol", "emia"],
+        "financialization": ["financial", "ization"],
         "hipercolesterolemia": ["hiper", "colesterol", "emia"],
         "responsabilidadcontractual": ["responsabilidad", "contract", "ual"],
         "microfinanciamiento": ["micro", "financ", "iamiento"],
         "electroencefalograma": ["electro", "encefalo", "grama"],
         "confidencialidad": ["confidencial", "idad"],
     }
-    return mapping.get(word.lower(), [word[i:i + 5] for i in range(0, len(word), 5)])
+    return mapping.get(word.lower(), [word[i : i + 5] for i in range(0, len(word), 5)])
 
 
 def fake_wordpiece(word: str) -> list[str]:
     pieces = fake_bpe(word)
-    return pieces[:1] + [f"##{p}" for p in pieces[1:]]
+    return pieces[:1] + [f"##{piece}" for piece in pieces[1:]]
 
 
-class TokenBudget(BaseModel):
-    name: str
-    tokens: int = Field(..., gt=0)
-    attention_pairs: int = Field(..., gt=0)
-
-
-@dataclass
-class TokenizationRow:
-    word: str
-    word_level: list[str]
-    char_level: list[str]
-    bpe: list[str]
-    wordpiece: list[str]
+def attention_pairs(tokens: int) -> int:
+    return tokens * tokens
 
 
 def main() -> None:
     ensure_data()
-    contrato = read_text(LEGAL_PATH)
-    technical_words = ["hipercolesterolemia", "responsabilidadcontractual", "microfinanciamiento", "electroencefalograma", "confidencialidad"]
+    contrato = LEGAL_PATH.read_text(encoding="utf-8").strip()
+    words = [
+        "cat",
+        "hypercholesterolemia",
+        "financialization",
+        "responsabilidadcontractual",
+        "microfinanciamiento",
+        "confidencialidad",
+    ]
 
-    print_title("AEM4L4 | E02 - Tokenizacion subword")
+    title("AEM4L4 | E02 - Tokenizacion subword")
 
-    print_section(1, "CONTEXTO DEL CASO")
-    print("Medicina, derecho y finanzas tienen palabras que no entran en un vocabulario comun.")
-    print_file_evidence(LEGAL_PATH, "Contrato legal")
-    print(f"Preview: {contrato[:180]}...")
+    section(1, "Contexto")
+    print("Dominios como salud, finanzas y legal tienen palabras raras o compuestas.")
+    print(f"Contrato legal: {LEGAL_PATH.name}, {len(contrato.split())} palabras aproximadas")
 
-    print_section(2, "VERSION BASICA - word-level")
-    for word in technical_words:
-        print(f"  {word:<32} -> {word_tokenize(word)}")
-
-    print_section(3, "PROBLEMA DETECTADO")
-    print("[UNK] borra informacion. El modelo no ve prefijos, raices ni sufijos tecnicos.")
-    print("Character-level no pierde informacion, pero hace secuencias larguisimas.")
-
-    print_section(4, "VERSION MEJORADA - BPE y WordPiece")
+    section(2, "Comparacion de estrategias")
     rows = [
-        TokenizationRow(w, word_tokenize(w), char_tokenize(w), fake_bpe(w), fake_wordpiece(w))
-        for w in technical_words
+        TokenizationRow(word, word_tokenize(word), char_tokenize(word), fake_bpe(word), fake_wordpiece(word))
+        for word in words
     ]
     for row in rows:
         print(f"\n{row.word}")
         print(f"  word-level : {row.word_level}")
-        print(f"  char-level : {len(row.char_level)} chars")
+        print(f"  char-level : {len(row.char_level)} tokens -> {row.char_level[:12]}")
         print(f"  BPE        : {row.bpe}")
         print(f"  WordPiece  : {row.wordpiece}")
 
-    print_section(5, "VALIDACION")
-    contract_tokens = len(contrato.split())
-    budgets = [
-        TokenBudget(name="contrato_word_proxy", tokens=contract_tokens, attention_pairs=contract_tokens * contract_tokens),
-        TokenBudget(name="contexto_duplicado", tokens=contract_tokens * 2, attention_pairs=(contract_tokens * 2) ** 2),
-    ]
-    for budget in budgets:
-        print(f"{budget.name}: tokens={budget.tokens} pares_attention={budget.attention_pairs}")
-    try:
-        TokenBudget(name="mal", tokens=0, attention_pairs=0)
-    except ValidationError as exc:
-        print("Pydantic rechaza presupuesto sin tokens:")
-        print(exc)
+    section(3, "Costo aproximado")
+    for n in [10, 30, 50, 100, len(contrato.split())]:
+        print(f"{n:>4} tokens -> {attention_pairs(n):>7} pares de attention")
 
-    print_section(6, "ANTES VS DESPUES")
-    print("ANTES: word-level convierte terminos raros en [UNK].")
-    print("DESPUES: subwords preservan informacion y permiten manejar vocabulario tecnico con costo controlado.")
+    section(4, "Interpretacion")
+    print("[UNK] pierde informacion. Character-level conserva todo pero alarga la secuencia.")
+    print("Subwords balancean cobertura y costo: representan palabras nuevas con piezas conocidas.")
 
-    print_section(7, "DESAFIO PARA EL ALUMNO")
-    print("1. Agrega tres palabras legales y propone BPE/WordPiece.")
-    print("2. Calcula cuanto sube O(N^2) al pasar de 1.000 a 4.000 tokens.")
-    print("3. Discute cuando conviene chunking en vez de contexto gigante.")
-
-    trace_text("USER", "Tokenizá términos técnicos y estima el costo de attention.")
-    trace_json("EXTRACT", [
-        {
-            "word": row.word,
-            "word_level": row.word_level,
-            "char_level_count": len(row.char_level),
-            "bpe": row.bpe,
-            "wordpiece": row.wordpiece,
-        }
-        for row in rows
-    ])
-    trace_json("METRICS", [budget.model_dump(mode="json") for budget in budgets])
+    section(5, "Desafio")
+    print("Agrega tres terminos legales y decide si conviene token completo, BPE o WordPiece.")
 
 
 if __name__ == "__main__":

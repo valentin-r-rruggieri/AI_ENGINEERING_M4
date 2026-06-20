@@ -1,0 +1,24 @@
+{
+  "company": "Banco Regional",
+  "goal": "Responder preguntas de clientes sobre productos, limites y requisitos regulatorios.",
+  "latency_sla_ms": 600,
+  "gpu_budget": "limitado",
+  "domain_terms": [
+    "perfil transaccional",
+    "sujeto obligado",
+    "debida diligencia reforzada",
+    "riesgo crediticio",
+    "microfinanciamiento"
+  ],
+  "sample_context": [
+    "El cliente consulta si puede aumentar el limite de su tarjeta adicional.",
+    "La politica interna exige revisar historial crediticio, ingresos declarados y alertas AML.",
+    "La normativa nueva agrega controles para sujetos obligados y operaciones inusuales."
+  ],
+  "expected_decisions": [
+    "Transformer moderado por balance de calidad y latencia.",
+    "Tokenizacion subword robusta para jerga financiera y regulatoria.",
+    "LoRA para adaptar dominio sin reentrenar todos los parametros.",
+    "Contexto controlado con recuperacion de documentos relevantes."
+  ]
+}

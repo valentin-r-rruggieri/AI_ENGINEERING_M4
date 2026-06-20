@@ -3,41 +3,25 @@ E03 - LoRA vs Full Fine-Tuning con ADR estructurado
 AEM4L4 | Fundamentos teoricos y arquitectura
 
 Objetivo pedagogico:
-    Comparar storage/costo entre full fine-tuning y LoRA, y convertir la
-    decision en un Architecture Decision Record validado.
-
+    Comparar almacenamiento, costo operativo y riesgo entre full fine-tuning
+    y LoRA; luego pedir a OpenAI un ADR validado con Pydantic.
 """
 
 from __future__ import annotations
 
+import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Literal, cast
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field, ValidationError
-
-ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT_DIR))
-from common import require_openai_api_key, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from pydantic import BaseModel, Field
 
 
-def print(*args, **kwargs):  # type: ignore[no-untyped-def]
-    return None
-
-load_dotenv()
-require_openai_api_key()
-
-MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path(__file__).parent / "data"
 PROFILES_PATH = DATA_DIR / "perfiles_uso.json"
-
-
-def ensure_data() -> None:
-    run_generator(DATA_DIR, "generate_data.py", PROFILES_PATH)
-
-
 Decision = Literal["LoRA", "Full Fine-Tuning", "Hybrid"]
 
 
@@ -50,6 +34,31 @@ class ArchitectureDecisionRecord(BaseModel):
     consequences_negative: list[str] = Field(..., min_length=1)
 
 
+def title(text: str) -> None:
+    print("\n" + "=" * 78)
+    print(text)
+    print("=" * 78)
+
+
+def section(number: int, text: str) -> None:
+    print(f"\n{number}. {text}")
+    print("-" * 78)
+
+
+def ensure_data() -> None:
+    if PROFILES_PATH.exists():
+        return
+    subprocess.run([sys.executable, str(DATA_DIR / "generate_data.py")], check=True)
+
+
+def require_openai_api_key() -> None:
+    if not os.getenv("OPENAI_API_KEY"):
+        raise RuntimeError(
+            "Falta OPENAI_API_KEY. Copia python_puro/AEM4_python_exercises/.env.example "
+            "a .env y completa tu API key antes de ejecutar este ejercicio."
+        )
+
+
 def storage_full_ft(model_gb: float, clients: int) -> float:
     return model_gb * clients
 
@@ -58,100 +67,57 @@ def storage_lora(model_gb: float, adapter_gb: float, clients: int) -> float:
     return model_gb + adapter_gb * clients
 
 
-def decide_profile(profile: dict) -> Decision:
-    if len(profile["dominios"]) == 1 and profile["presupuesto"] == "alto" and profile["trafico"] == "estable_alto":
-        return "Full Fine-Tuning"
-    if profile["trafico"] == "picos" and profile["presupuesto"] == "alto":
-        return "Hybrid"
-    return "LoRA"
-
-
 def generate_adr(profile: dict) -> ArchitectureDecisionRecord:
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_openai import ChatOpenAI
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Sos arquitecto ML. Genera un ADR breve y estructurado para adaptar un LLM."),
-        ("user", "Perfil: {profile}"),
-    ])
-    chain = prompt | ChatOpenAI(model=MODEL_NAME, temperature=0).with_structured_output(ArchitectureDecisionRecord)
-    return cast(ArchitectureDecisionRecord, chain.invoke({"profile": profile}))
-    decision = decide_profile(profile)
-    return ArchitectureDecisionRecord(
-        title=f"Adaptacion de modelo para {profile['cliente']}",
-        context=f"Dominios={profile['dominios']}, presupuesto={profile['presupuesto']}, trafico={profile['trafico']}.",
-        decision=decision,
-        rationale=f"Se elige {decision} porque balancea costo, aislamiento por cliente y velocidad de iteracion para este perfil concreto.",
-        consequences_positive=["Decision explicita y reproducible", "Costo estimable antes de entrenar"],
-        consequences_negative=["Puede requerir reevaluacion si cambia el trafico", "La calidad debe medirse con dataset propio"],
+    model_name = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Sos arquitecto ML. Genera un ADR breve en espanol para adaptar un LLM. "
+                "La decision debe ser exactamente LoRA, Full Fine-Tuning o Hybrid.",
+            ),
+            ("user", "Perfil: {profile}"),
+        ]
     )
+    chain = prompt | ChatOpenAI(model=model_name, temperature=0).with_structured_output(ArchitectureDecisionRecord)
+    return cast(ArchitectureDecisionRecord, chain.invoke({"profile": profile}))
 
 
 def main() -> None:
+    load_dotenv()
     ensure_data()
-    profiles = read_json(PROFILES_PATH)
+    require_openai_api_key()
+    profiles = json.loads(PROFILES_PATH.read_text(encoding="utf-8"))
 
-    print_title("AEM4L4 | E03 - LoRA vs Full Fine-Tuning")
+    title("AEM4L4 | E03 - LoRA vs Full Fine-Tuning")
 
-    print_section(1, "CONTEXTO DEL CASO")
-    print("Una plataforma necesita adaptar un modelo para varios clientes y dominios.")
-    print_file_evidence(PROFILES_PATH, "Perfiles")
+    section(1, "Contexto")
+    print("Una plataforma multi-cliente necesita adaptar un modelo a dominios diferentes.")
+    print(f"Perfiles disponibles: {[profile['cliente'] for profile in profiles]}")
 
-    print_section(2, "VERSION BASICA - elegir Full FT para todos")
+    section(2, "Costo de storage")
     model_gb = 14.0
     adapter_gb = 0.33
     clients = 50
-    print(f"Full FT: {clients} clientes x {model_gb} GB = {storage_full_ft(model_gb, clients):.1f} GB")
-    print("La decision parece simple, pero duplica el modelo completo por cliente.")
+    print(f"Full FT: {clients} x {model_gb} GB = {storage_full_ft(model_gb, clients):.1f} GB")
+    print(f"LoRA   : base {model_gb} GB + {clients} x {adapter_gb} GB = {storage_lora(model_gb, adapter_gb, clients):.1f} GB")
+    print("Diferencia:", f"{storage_full_ft(model_gb, clients) - storage_lora(model_gb, adapter_gb, clients):.1f} GB")
 
-    print_section(3, "PROBLEMA DETECTADO")
-    print("Full FT entrena todos los parametros, requiere mas GPU, mas storage y aumenta riesgo de catastrophic forgetting.")
-    print("Para muchos clientes, el costo operativo escala linealmente con copias completas.")
+    section(3, "OpenAI genera ADRs")
+    adrs = [generate_adr(profile) for profile in profiles]
+    for profile, adr in zip(profiles, adrs):
+        print(f"\nCliente: {profile['cliente']}")
+        print(json.dumps(adr.model_dump(mode="json"), ensure_ascii=False, indent=2))
 
-    print_section(4, "VERSION MEJORADA - LoRA + ADR")
-    print(f"LoRA: modelo base {model_gb} GB + {clients} adapters x {adapter_gb} GB = {storage_lora(model_gb, adapter_gb, clients):.1f} GB")
-    print("Tabla de decision: un dominio + alto presupuesto -> Full FT; multi-cliente o bajo presupuesto -> LoRA; picos + calidad -> Hybrid.")
-    adrs = []
-    for profile in profiles:
-        adr = generate_adr(profile)
-        adrs.append(adr)
-        print(f"\nADR - {profile['cliente']}")
-        print(f"  Decision: {adr.decision}")
-        print(f"  Contexto: {adr.context}")
-        print(f"  Rationale: {adr.rationale}")
+    section(4, "Interpretacion")
+    print("Full fine-tuning modifica todos los parametros y puede ser razonable con mucho dato y presupuesto.")
+    print("LoRA congela la base y entrena adapters chicos: ideal para dominios y clientes multiples.")
 
-    print_section(5, "VALIDACION")
-    try:
-        ArchitectureDecisionRecord.model_validate({
-            "title": "ADR malo",
-            "context": "sin contexto",
-            "decision": "Prompting",
-            "rationale": "corto",
-            "consequences_positive": [],
-            "consequences_negative": [],
-        })
-    except ValidationError as exc:
-        print("Pydantic rechaza decision fuera de Literal y rationale corto:")
-        print(exc)
-
-    print_section(6, "ANTES VS DESPUES")
-    print("ANTES: decision a dedo, storage alto y trade-offs invisibles.")
-    print("DESPUES: calculo LoRA vs Full FT + ADR con contexto, decision y consecuencias.")
-
-    print_section(7, "DESAFIO PARA EL ALUMNO")
-    print("1. Agrega un perfil hibrido con picos de trafico y varios dominios.")
-    print("2. Agrega costo_estimado_gpu_hours al schema.")
-    print("3. Defende cuando Full FT sigue siendo razonable.")
-
-    trace_text("USER", "Compará Full Fine-Tuning vs LoRA para 50 clientes y generá ADRs por perfil.")
-    trace_json("METRICS", {
-        "full_finetuning_storage_gb": storage_full_ft(model_gb, clients),
-        "lora_storage_gb": storage_lora(model_gb, adapter_gb, clients),
-        "clients": clients,
-        "model_gb": model_gb,
-        "adapter_gb": adapter_gb,
-    })
-    trace_json("EXTRACT", [adr.model_dump(mode="json") for adr in adrs])
+    section(5, "Desafio")
+    print("Agrega costo_estimado_gpu_hours al ADR y defende cuando usarias Hybrid.")
 
 
 if __name__ == "__main__":

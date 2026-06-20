@@ -12,7 +12,7 @@ Cada ejercicio compara una versión básica (que "funciona" pero tiene problemas
 python_puro/AEM4_python_exercises/
 ├── AEM4L1_vision_imagenes/     — Visión + Pydantic + golden cases
 ├── AEM4L2_audio_pipelines/     — Audio + WER + confiabilidad
-├── AEM4L3_mcp/                 — MCP + schemas + scopes
+├── AEM4L3_mcp/                 — MCP real + GitHub + schemas + scopes
 ├── AEM4L4_fundamentos_arquitectura/ — Transformer + tokenización + LoRA
 └── AEM4L5_adaptacion_serving/  — Serving + profiling + async
 ```
@@ -45,6 +45,8 @@ Antes de ejecutar, copiá `.env.example` a `.env` y completá:
 
 ```bash
 OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4o-mini
+GITHUB_TOKEN=...   # solo para AEM4L3 GitHub MCP
 ```
 
 Los scripts fallan temprano si falta la API key, para que la clase use siempre el flujo real.
@@ -57,8 +59,8 @@ Los scripts fallan temprano si falta la API key, para que la clase use siempre e
 |---|---|
 | **AEM4L1** | Pasar de imagen → descripción libre → JSON mínimo → Pydantic completo |
 | **AEM4L2** | Audio → transcripción → resumen libre → JSON mínimo → WER → gate confiable |
-| **AEM4L3** | Wrappers ad hoc → contrato MCP → scopes + versionado |
-| **AEM4L4** | Intuir self-attention → tokenización → decisiones LoRA vs FT |
+| **AEM4L3** | Wrappers ad hoc → MCP server real con GitHub → OpenAI host → scopes + versionado + governance |
+| **AEM4L4** | Self-attention → Q/K/V → tokenización → latencia → PEFT/LoRA → ADR financiero |
 | **AEM4L5** | Elegir arquitectura de serving → profiling → async pipeline |
 
 ---

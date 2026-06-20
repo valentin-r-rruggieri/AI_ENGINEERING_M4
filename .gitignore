@@ -6,3 +6,4 @@ guiones_clases_practicas/
 **/.env
 __pycache__/
 *.py[cod]
+python_puro/AEM4_python_exercises/AEM4L3_mcp/data/*audit*.jsonl

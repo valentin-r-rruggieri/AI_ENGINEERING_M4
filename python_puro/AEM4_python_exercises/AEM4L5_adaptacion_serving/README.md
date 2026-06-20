@@ -1,36 +1,51 @@
 # AEM4L5 | Adaptación Avanzada y Serving
 
+Ejercicios Python puro para convertir la teoría de L5 en práctica ejecutable con OpenAI real.
+
 ## Objetivo
 
-Entender que el despliegue, el profiling y la concurrencia no son detalles técnicos — son decisiones de arquitectura que impactan directamente en el costo, la latencia y la experiencia del usuario.
-
----
+Entender que adaptar, desplegar y optimizar IA en producción no es una sola decisión. Un sistema sostenible combina LoRA/PEFT, arquitectura de serving, profiling, async y métricas.
 
 ## Ejercicios
 
-| Archivo | Problema | Solución |
+| Archivo | Problema | Qué se practica |
 |---|---|---|
-| `e01_serverless_vs_server.py` | Siempre elegimos servidor 24/7 sin evaluar el patrón de tráfico | Función de recomendación basada en criterios objetivos |
-| `e02_cprofile_optimizacion.py` | Optimizamos "a ojo" sin saber dónde está el cuello de botella | cProfile muestra exactamente qué función consume el tiempo |
-| `e03_async_pipeline.py` | 5 llamadas secuenciales tardan 5 segundos | asyncio.gather() procesa las 5 en paralelo en ~1 segundo |
-
----
+| `e01_serverless_vs_server.py` | Elegir infraestructura sin medir cold start | Medición cold/warm y decisión serverless vs servidor persistente |
+| `e02_cprofile_optimizacion.py` | Optimizar a ojo un pipeline lento | `cProfile`, hotspot CPU-bound, regex compilada y etapa LLM real |
+| `e03_async_pipeline.py` | Ejecutar N llamadas LLM en serie | Comparación secuencial vs `abatch` async para I/O-bound |
+| `e04_integrador_adaptacion_serving.py` | Tomar decisiones aisladas | Plan integral: LoRA/PEFT, serving, profiling, async y métricas |
 
 ## Cómo ejecutar
+
+Desde `python_puro/AEM4_python_exercises/`:
 
 ```bash
 python AEM4L5_adaptacion_serving/e01_serverless_vs_server.py
 python AEM4L5_adaptacion_serving/e02_cprofile_optimizacion.py
 python AEM4L5_adaptacion_serving/e03_async_pipeline.py
+python AEM4L5_adaptacion_serving/e04_integrador_adaptacion_serving.py
 ```
 
----
+Estos ejercicios usan OpenAI real. Antes de ejecutar, configurar:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4o-mini
+```
 
 ## Conceptos clave
 
-- **Serverless:** el proveedor asigna y libera recursos por request (pagar por uso, no por uptime).
-- **Cold start:** tiempo que tarda en activarse una función serverless desde cero (~2–30s).
-- **cProfile:** profiler de Python que mide `ncalls`, `tottime` y `cumtime` por función.
-- **CPU-bound:** el cuello de botella es el procesador (cálculos pesados).
-- **I/O-bound:** el cuello de botella es esperar respuestas externas (red, disco, API).
-- **asyncio.gather():** ejecuta múltiples coroutines I/O-bound en paralelo sin threads.
+- **LoRA / PEFT:** un modelo base congelado más adapters livianos por cliente o dominio.
+- **Serverless:** bueno para tráfico irregular y bajo costo ocioso, con riesgo de cold start.
+- **Servidor persistente:** bueno para baja latencia estable, con costo fijo.
+- **cProfile:** evidencia para optimizar CPU-bound antes de tocar código por intuición.
+- **CPU-bound:** cálculo local pesado; se mejora con profiling, optimización, vectorización o procesos.
+- **I/O-bound:** espera por red, storage, APIs o DB; se mejora con async, batching y límites de concurrencia.
+- **Métricas:** p50/p95/p99, cold start, costo por request, error rate, tiempo de I/O y tiempo de CPU.
+
+## Uso didáctico
+
+1. Mostrar primero los gráficos Mermaid de los notebooks.
+2. Ejecutar el script correspondiente.
+3. Leer la sección `VALIDACION`.
+4. Cerrar con el `DESAFIO PARA EL ALUMNO`.

@@ -1,170 +1,90 @@
-"""
-E01 - Comparador monolitico vs arquitectura de dos agentes
-PIM4 | LegalMove
+"""E01 - Comparador monolitico vs arquitectura de dos agentes.
 
-Objetivo pedagogico:
-    Comparar un agente que hace todo contra ContextualizationAgent +
-    ExtractionAgent, trabajando desde imagenes reales de contrato/adenda.
-
+La clase arranca con una idea simple: comparar texto original contra adenda.
+Despues separa responsabilidades en ContextualizationAgent y ExtractionAgent,
+que es exactamente lo que pide la rubrica del PIM4.
 """
 
 from __future__ import annotations
 
-import json
+import argparse
 import os
-import sys
 from pathlib import Path
-from typing import Any
 
 from dotenv import load_dotenv
 
-# PIM vive fuera de python_puro para que el proyecto integrador quede separado,
-# pero reutiliza las utilidades y el .env comun de los ejercicios Python.
-REPO_DIR = Path(__file__).resolve().parents[3]
-COMMON_DIR = REPO_DIR / "python_puro" / "AEM4_python_exercises"
-sys.path.insert(0, str(COMMON_DIR))
-from common import require_openai_api_key, image_to_base64, print_file_evidence, print_section, print_title, read_json, run_generator, trace_json, trace_text
+from legalmove_core import (
+    DATA_DIR,
+    ContextualizationAgent,
+    ExtractionAgent,
+    load_expected,
+    parse_contract_image,
+    print_json,
+    print_section,
+    print_title,
+    score_sections,
+)
 
 
-def print(*args, **kwargs):  # type: ignore[no-untyped-def]
-    return None
-
-load_dotenv(COMMON_DIR / ".env")
-require_openai_api_key()
-
-MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-VISION_MODEL = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
-DATA_DIR = Path(__file__).parent / "data"
 CONTRACT_IMG = DATA_DIR / "contrato_original.png"
 AMENDMENT_IMG = DATA_DIR / "adenda_simple.png"
-EXPECTED_PATH = DATA_DIR / "expected" / "cambio_simple.json"
 
 
-def ensure_data() -> None:
-    run_generator(DATA_DIR, "generate_data.py", CONTRACT_IMG)
+def monolithic_comparison(original_text: str, amendment_text: str) -> str:
+    """Version fragil: un solo paso mezcla lectura, contexto y extraccion."""
+    _ = original_text
+    _ = amendment_text
+    return (
+        "Parece que cambio la duracion del contrato. "
+        "La respuesta es util para una persona, pero no es un dato validado."
+    )
 
 
-def image_to_text(path: Path) -> str:
-    img_b64 = image_to_base64(path)
-    from langchain_core.messages import HumanMessage
-    from langchain_openai import ChatOpenAI
+def run(use_real_api: bool = False) -> None:
+    expected = load_expected("cambio_simple")
 
-    llm = ChatOpenAI(model=VISION_MODEL, temperature=0)
-    message = HumanMessage(content=[
-        {"type": "text", "text": "Extrae el texto visible de este documento legal. No inventes contenido."},
-        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-    ])
-    content = llm.invoke([message]).content
-    return content if isinstance(content, str) else str(content)
+    print_title("PIM4 | E01 - Comparador basico vs dos agentes")
 
+    print_section(1, "Contexto del caso")
+    print("Caso simple: contrato original + adenda que modifica la duracion.")
+    print(f"Contrato: {CONTRACT_IMG}")
+    print(f"Adenda  : {AMENDMENT_IMG}")
 
-def monolithic_comparison(original: str, amendment: str) -> str:
-    from langchain_core.output_parsers import StrOutputParser
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_openai import ChatOpenAI
+    original_text = parse_contract_image(CONTRACT_IMG, "Contrato original", use_real_api=use_real_api)
+    amendment_text = parse_contract_image(AMENDMENT_IMG, "Adenda simple", use_real_api=use_real_api)
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Compara contrato y adenda. Responde en texto libre que cambio."),
-        ("user", "Contrato:\n{original}\n\nAdenda:\n{amendment}"),
-    ])
-    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
-    return "Parece que cambio la duracion del contrato, aunque no queda claro si hay otros ajustes."
+    print_section(2, "Version basica - prompt monolitico")
+    monolithic = monolithic_comparison(original_text, amendment_text)
+    print(monolithic)
+    print(f"Score contra golden: {score_sections(monolithic, expected)}")
 
+    print_section(3, "Problema detectado")
+    print("El output monolitico no deja claro que etapa fallo si el resultado es incorrecto.")
+    print("Tampoco produce un JSON que un backend pueda procesar directamente.")
 
-def contextualization_agent(original: str, amendment: str) -> str:
-    from langchain_core.output_parsers import StrOutputParser
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_openai import ChatOpenAI
+    print_section(4, "Version mejorada - dos agentes")
+    context_map = ContextualizationAgent(use_real_api=use_real_api).run(original_text, amendment_text)
+    result = ExtractionAgent(use_real_api=use_real_api).run(original_text, amendment_text, context_map)
+    print(context_map)
+    print_json("ContractChangeOutput validado", result)
+    print(f"Score contra golden: {score_sections(result, expected)}")
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Mapea secciones del contrato. No extraigas cambios finales."),
-        ("user", "Contrato:\n{original}\n\nAdenda:\n{amendment}"),
-    ])
-    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | StrOutputParser()).invoke({"original": original, "amendment": amendment})
-    return "Secciones: payment_terms, duration, service_territory. La adenda toca solo duration."
-
-
-def extraction_agent(original: str, amendment: str, context_map: str) -> dict[str, Any]:
-    from langchain_core.output_parsers import JsonOutputParser
-    from langchain_core.prompts import ChatPromptTemplate
-    from langchain_openai import ChatOpenAI
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Usa el context_map para extraer cambios. Devolve JSON con sections_changed, topics_touched, summary_of_the_change."),
-        ("user", "Context map:\n{context_map}\nContrato:\n{original}\nAdenda:\n{amendment}"),
-    ])
-    return (prompt | ChatOpenAI(model=MODEL_NAME, temperature=0) | JsonOutputParser()).invoke({
-        "context_map": context_map,
-        "original": original,
-        "amendment": amendment,
-    })
-    return {
-        "sections_changed": ["duration"],
-        "topics_touched": ["duracion contractual"],
-        "summary_of_the_change": "La duracion del contrato se extiende de 12 a 18 meses.",
-    }
-
-
-def score_sections(raw: dict[str, Any] | str, expected: dict[str, Any]) -> str:
-    if isinstance(raw, str):
-        detected = ["duration"] if "duracion" in raw.lower() else []
-    else:
-        detected = raw.get("sections_changed", [])
-    expected_sections = set(expected["sections_changed"])
-    return f"{len(set(detected) & expected_sections)}/{len(expected_sections)}"
+    print_section(5, "Idea para explicar en clase")
+    print("Primero leemos, despues ordenamos contexto y recien al final extraemos cambios.")
+    print("Separar esos pasos baja alucinaciones y vuelve auditable el pipeline.")
 
 
 def main() -> None:
-    ensure_data()
-    expected = read_json(EXPECTED_PATH)
-
-    print_title("PIM4 | E01 - Comparador basico vs agentes")
-
-    print_section(1, "CONTEXTO DEL CASO")
-    print("LegalMove analiza 50 adendas por semana. Separar mapear de extraer mejora precision y debug.")
-    print_file_evidence(CONTRACT_IMG, "Contrato")
-    print_file_evidence(AMENDMENT_IMG, "Adenda")
-    print_file_evidence(EXPECTED_PATH, "Golden")
-
-    original = image_to_text(CONTRACT_IMG)
-    amendment = image_to_text(AMENDMENT_IMG)
-
-    print_section(2, "VERSION BASICA - agente monolitico")
-    mono = monolithic_comparison(original, amendment)
-    print(f"Output monolitico: {mono}")
-
-    print_section(3, "PROBLEMA DETECTADO")
-    print("El monolitico mezcla lectura, contextualizacion y extraccion. Si falla, no sabemos en que etapa.")
-
-    print_section(4, "VERSION MEJORADA - ContextualizationAgent + ExtractionAgent")
-    context_map = contextualization_agent(original, amendment)
-    raw = extraction_agent(original, amendment, context_map)
-    print(f"Context map: {context_map}")
-    print(f"Extraccion raw: {json.dumps(raw, ensure_ascii=False, indent=2)}")
-
-    print_section(5, "VALIDACION")
-    print(f"Score monolitico vs golden: {score_sections(mono, expected)}")
-    print(f"Score dos agentes vs golden: {score_sections(raw, expected)}")
-    print(f"Golden esperado: {expected}")
-
-    print_section(6, "ANTES VS DESPUES")
-    print("ANTES: un prompt grande, texto libre y poca trazabilidad.")
-    print("DESPUES: mapa de contexto -> extraccion enfocada -> salida comparable con golden.")
-
-    print_section(7, "DESAFIO PARA EL ALUMNO")
-    print("1. Usa adenda_compleja.png y compara 3 cambios.")
-    print("2. Decide cuando ContextualizationAgent no hace falta.")
-    print("3. Convierte el raw dict en ContractChangeOutput validado.")
-
-    trace_text("USER", "Compará contrato original y adenda simple. Extraé cambios contractuales.")
-    trace_text("LLM", mono)
-    trace_text("THINK", context_map)
-    trace_json("EXTRACT", raw)
-    trace_json("METRICS", {
-        "monolithic_score": score_sections(mono, expected),
-        "two_agent_score": score_sections(raw, expected),
-        "expected": expected,
-    })
+    load_dotenv(Path(__file__).with_name(".env"))
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--real-api",
+        action="store_true",
+        default=os.getenv("PIM4_USE_REAL_API") == "1",
+        help="Usa OpenAI Vision/LLM real. Por defecto corre con mocks deterministas.",
+    )
+    args = parser.parse_args()
+    run(use_real_api=args.real_api)
 
 
 if __name__ == "__main__":

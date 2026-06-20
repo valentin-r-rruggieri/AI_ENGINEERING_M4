@@ -4,6 +4,7 @@ openai>=1.40.0
 langchain>=0.2.0
 langchain-openai>=0.1.0
 langchain-core>=0.2.0
+mcp[cli]>=1.27,<2
 Pillow>=10.0.0
 numpy>=1.24.0
 scipy>=1.11.0

@@ -28,7 +28,7 @@ AI_ENGINEERING_M4/
 └── README.md
 ```
 
-Las carpetas de `notebooks/` y `proyecto_integrador/notebooks/` contienen **8 notebooks** `.ipynb` compatibles con Google Colab:
+Las carpetas de `notebooks/` y `proyecto_integrador/notebooks/` contienen secuencias `.ipynb` compatibles con Google Colab. La mayoria de las lecciones tiene 8 notebooks; AEM4L1 tiene 10 y AEM4L4 tiene 12 por su progresion teorica expandida.
 
 | Ejercicio | Tipo | Descripción |
 |-----------|------|-------------|
@@ -41,7 +41,7 @@ Las carpetas de `notebooks/` y `proyecto_integrador/notebooks/` contienen **8 no
 | E07 | Inicial | Warm-up mínimo |
 | E08 | Avanzado | Ejercicio cumbre del módulo |
 
-**Total: 48 notebooks** listos para Google Colab: 40 de clases AEM4L1-L5 y 8 del proyecto integrador.
+**Total: 54 notebooks** listos para Google Colab: 46 de clases AEM4L1-L5 y 8 del proyecto integrador.
 
 ---
 
@@ -106,20 +106,24 @@ Protocolo estándar para conectar LLMs con herramientas, recursos y prompts exte
 
 ### AEM4L4 — Fundamentos Teóricos y Arquitectura
 
-Internals de transformers: self-attention, Q/K/V, costo cuadrático O(N²), tokenización (BPE vs WordPiece).
+Internals de transformers: self-attention, Q/K/V, bloques Transformer, costo cuadrático O(N²), tokenización (BPE vs WordPiece), vocabulario, PEFT, LoRA y decisiones de latencia.
 
 | Notebook | Descripción |
 |----------|-------------|
-| E01 | Mapas de atención conceptual (qué palabras atienden a cuáles) |
-| E02 | Analogía Q/K/V con búsqueda en e-commerce |
-| E03 | Escalado O(N²): tokens vs operaciones vs memoria GPU |
-| E04 | Comparar BPE vs WordPiece con ejemplos |
-| E05 | Ejercicio: relaciones de atención en texto clínico |
-| E06 | Ejercicio: estimar costo de tokens en contrato legal |
-| E07 | Contar tokens y calcular relaciones N² |
-| E08 | ADR (Architecture Decision Record) para chatbot financiero |
+| E01 | Fundamentos para AI Engineering: arquitectura, tokenización, costo y latencia |
+| E02 | RNN/LSTM vs Transformer |
+| E03 | Self-attention conceptual con mapa de atención |
+| E04 | Query, Key y Value con ejemplo trabajado |
+| E05 | Bloque Transformer: attention, FFN, LayerNorm y residuales |
+| E06 | Costo cuadrático de attention |
+| E07 | Tokenización por palabra, carácter y subword |
+| E08 | BPE vs WordPiece |
+| E09 | Vocabulario, memoria y latencia |
+| E10 | PEFT vs full fine-tuning |
+| E11 | LoRA conceptual y storage por cliente |
+| E12 | ADR para chatbot financiero |
 
-**Conceptos clave:** RNN vs Transformer, self-attention, Q/K/V, O(N²), BPE, WordPiece, ADR
+**Conceptos clave:** RNN vs Transformer, self-attention, Q/K/V, bloque Transformer, O(N²), BPE, WordPiece, vocabulario, PEFT, LoRA, ADR
 
 ---
 
