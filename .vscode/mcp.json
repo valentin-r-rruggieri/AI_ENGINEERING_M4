@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "aem4l3Github": {
+      "type": "stdio",
+      "command": "/Users/valentin/AI_ENGINEERING_M4/.venv/bin/python",
+      "args": [
+        "${workspaceFolder}/python_puro/AEM4_python_exercises/AEM4L3_mcp/e01_github_mcp_server.py"
+      ],
+      "envFile": "${workspaceFolder}/python_puro/AEM4_python_exercises/.env"
+    }
+  }
+}

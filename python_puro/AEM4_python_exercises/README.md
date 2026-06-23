@@ -59,7 +59,7 @@ Los scripts fallan temprano si falta la API key, para que la clase use siempre e
 |---|---|
 | **AEM4L1** | Pasar de imagen → descripción libre → JSON mínimo → Pydantic completo |
 | **AEM4L2** | Audio → transcripción → resumen libre → JSON mínimo → WER → gate confiable |
-| **AEM4L3** | Wrappers ad hoc → MCP server real con GitHub → OpenAI host → scopes + versionado + governance |
+| **AEM4L3** | Notebooks conceptuales de MCP → MCP server real con GitHub → OpenAI host por STDIO |
 | **AEM4L4** | Self-attention → Q/K/V → tokenización → latencia → PEFT/LoRA → ADR financiero |
 | **AEM4L5** | Elegir arquitectura de serving → profiling → async pipeline |
 

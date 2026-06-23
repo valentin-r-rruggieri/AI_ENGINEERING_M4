@@ -1,6 +1,6 @@
 # pyright: reportMissingImports=false
 """
-E04 - MCP server real para GitHub por STDIO
+E01 - MCP server real para GitHub por STDIO
 AEM4L3 | Model Context Protocol
 
 Objetivo pedagogico:
@@ -8,7 +8,7 @@ Objetivo pedagogico:
     El server expone GitHub como capacidades gobernadas: tools, resource y prompt.
 
 Como correrlo como MCP server:
-    python python_puro/AEM4_python_exercises/AEM4L3_mcp/e04_github_mcp_server.py
+    python python_puro/AEM4_python_exercises/AEM4L3_mcp/e01_github_mcp_server.py
 
 Variables requeridas:
     GITHUB_TOKEN: token real de GitHub con permisos para crear repos y escribir contenido.

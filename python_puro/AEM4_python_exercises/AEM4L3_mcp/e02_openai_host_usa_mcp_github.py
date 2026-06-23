@@ -1,6 +1,6 @@
 # pyright: reportMissingImports=false
 """
-E05 - Host OpenAI usando el MCP de GitHub por STDIO
+E02 - Host OpenAI usando el MCP de GitHub por STDIO
 AEM4L3 | Model Context Protocol
 
 Objetivo pedagogico:
@@ -32,7 +32,7 @@ load_dotenv(ROOT_DIR / ".env")
 require_openai_api_key()
 
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-SERVER_PATH = Path(__file__).with_name("e04_github_mcp_server.py")
+SERVER_PATH = Path(__file__).with_name("e01_github_mcp_server.py")
 
 
 class CreateRepoArgs(BaseModel):

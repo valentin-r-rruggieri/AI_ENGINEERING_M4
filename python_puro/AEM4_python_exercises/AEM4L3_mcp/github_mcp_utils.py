@@ -83,8 +83,8 @@ def github_request(
 def append_audit_event(tool_name: str, payload: dict[str, Any]) -> None:
     """Registra auditoria local sin token ni contenido sensible.
 
-    La auditoria muestra governance: quien ejecuto, que tool, contra que repo y
-    cuando. Para clase es suficiente y evita guardar secretos por accidente.
+    La auditoria muestra control operativo: quien ejecuto, que tool, contra que
+    repo y cuando. Para clase es suficiente y evita guardar secretos por accidente.
     """
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     safe_payload = {

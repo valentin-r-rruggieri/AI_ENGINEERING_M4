@@ -1,23 +1,24 @@
-# AEM4L3 | MCP real + GitHub + governance
+# AEM4L3 | MCP GitHub completo en Python
 
 ## Objetivo
 
-Construir criterio y practica real de MCP:
+En L3, los conceptos base de MCP se trabajan en notebooks. Esta carpeta Python queda reservada para un unico MCP completo, funcional y usable desde clientes reales: **GitHub por STDIO**.
 
-1. Ver por que las integraciones ad hoc se rompen.
-2. Separar MCP Host, MCP Client y MCP Server.
-3. Exponer tools, resources y prompts.
-4. Ejecutar un MCP server real de GitHub por STDIO.
-5. Usar OpenAI como host que decide una accion y llama al MCP.
-6. Cerrar con scopes, auditoria, versionado y riesgos operativos.
+La progresion queda asi:
+
+| Archivo | Rol | Para que sirve |
+|---|---|---|
+| `e01_github_mcp_server.py` | MCP Server real | Expone GitHub como tools, resource y prompt por STDIO |
+| `e02_openai_host_usa_mcp_github.py` | Host de demostracion | Usa OpenAI + MCP Client para llamar al server GitHub |
+| `github_mcp_utils.py` | Helper interno | Ejecuta GitHub REST API y escribe audit log local |
 
 ## Requisitos
 
-Instalar dependencias desde la carpeta de ejercicios:
+Instalar dependencias:
 
 ```bash
 cd /Users/valentin/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises
-pip install -r requirements.txt
+/Users/valentin/AI_ENGINEERING_M4/.venv/bin/python -m pip install -r requirements.txt
 ```
 
 Variables en `.env`:
@@ -28,58 +29,49 @@ OPENAI_MODEL=gpt-4o-mini
 GITHUB_TOKEN=...
 ```
 
-`GITHUB_TOKEN` debe permitir crear repositorios y escribir contenido. El ejercicio crea repos privados por defecto y no expone ninguna tool de borrado.
+`GITHUB_TOKEN` debe permitir crear repositorios y escribir contenido. El MCP GitHub crea repos privados por defecto y no expone ninguna tool de borrado.
 
-## Ejercicios Python
+## MCP GitHub real
 
-| Orden | Archivo | Tema | Qué muestra |
-|---|---|---|---|
-| E01 | `e01_tool_calling_ad_hoc_vs_mcp.py` | Ad hoc vs contrato | Texto libre fragil vs tool call estructurado |
-| E02 | `e02_scopes_y_autorizacion.py` | Scopes | El LLM pide, pero `authorize()` decide |
-| E03 | `e03_versionado_schemas.py` | Versionado | Cambios aditivos vs rupturistas y adaptador v1 -> v2 |
-| E04 | `e04_github_mcp_server.py` | MCP Server real | FastMCP con GitHub tools, resource y prompt |
-| E05 | `e05_openai_host_usa_mcp_github.py` | MCP Host + OpenAI | OpenAI elige tool, MCP ejecuta GitHub por STDIO |
-| E06 | `e06_mcp_integrador_soporte.py` | Governance completa | tools/resources/prompts/scopes/audit/versionado |
-
-## Comandos
-
-Ejercicios conceptuales:
+Servidor:
 
 ```bash
-python AEM4L3_mcp/e01_tool_calling_ad_hoc_vs_mcp.py
-python AEM4L3_mcp/e02_scopes_y_autorizacion.py
-python AEM4L3_mcp/e03_versionado_schemas.py
+cd /Users/valentin/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises
+/Users/valentin/AI_ENGINEERING_M4/.venv/bin/python AEM4L3_mcp/e01_github_mcp_server.py
 ```
 
-Servidor MCP GitHub por STDIO:
+Host demo con OpenAI:
 
 ```bash
-python AEM4L3_mcp/e04_github_mcp_server.py
+cd /Users/valentin/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises
+/Users/valentin/AI_ENGINEERING_M4/.venv/bin/python AEM4L3_mcp/e02_openai_host_usa_mcp_github.py
 ```
 
-Host OpenAI que usa el server MCP por STDIO:
+Tools:
 
-```bash
-python AEM4L3_mcp/e05_openai_host_usa_mcp_github.py
-```
+- `github_create_repo(name, description, private=True)`.
+- `github_upsert_file(owner, repo, path, content, commit_message, branch="main")`.
+- `github_get_repo(owner, repo)`.
 
-Servidor MCP integrador de soporte:
+Resource:
 
-```bash
-python AEM4L3_mcp/e06_mcp_integrador_soporte.py
-```
+- `github://config`.
 
-## Config Antigravity sugerida
+Prompt:
 
-Usar el server GitHub por STDIO:
+- `repo_bootstrap_prompt(project_name, goal)`.
+
+## Probar desde Antigravity
+
+Agregar este server MCP por STDIO:
 
 ```json
 {
   "mcpServers": {
     "aem4l3-github": {
-      "command": "python",
+      "command": "/Users/valentin/AI_ENGINEERING_M4/.venv/bin/python",
       "args": [
-        "/Users/valentin/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises/AEM4L3_mcp/e04_github_mcp_server.py"
+        "/Users/valentin/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises/AEM4L3_mcp/e01_github_mcp_server.py"
       ],
       "env": {
         "GITHUB_TOKEN": "ghp_..."
@@ -89,27 +81,53 @@ Usar el server GitHub por STDIO:
 }
 ```
 
-## Tools del MCP GitHub
+Para probar en clase:
 
-- `github_create_repo(name, description, private=True)`: crea repo real privado por defecto.
-- `github_upsert_file(owner, repo, path, content, commit_message, branch="main")`: crea o actualiza archivo con commit real.
-- `github_get_repo(owner, repo)`: consulta metadata del repo.
+```text
+Usa el MCP aem4l3-github para crear un repositorio privado llamado aem4l3-mcp-demo y agregar un README.md inicial.
+```
 
-Resource:
+## Probar desde VS Code
 
-- `github://config`: muestra configuracion segura del server sin token.
+VS Code usa `.vscode/mcp.json` para servidores MCP de workspace. En este repo ya queda creado un ejemplo que usa `envFile` y lee `GITHUB_TOKEN` desde `.env`, sin hardcodear el token.
 
-Prompt:
+Archivo:
 
-- `repo_bootstrap_prompt(project_name, goal)`: plantilla para crear repo + README.
+```text
+/Users/valentin/AI_ENGINEERING_M4/.vscode/mcp.json
+```
+
+Contenido equivalente:
+
+```json
+{
+  "servers": {
+    "aem4l3Github": {
+      "type": "stdio",
+      "command": "/Users/valentin/AI_ENGINEERING_M4/.venv/bin/python",
+      "args": [
+        "${workspaceFolder}/python_puro/AEM4_python_exercises/AEM4L3_mcp/e01_github_mcp_server.py"
+      ],
+      "envFile": "${workspaceFolder}/python_puro/AEM4_python_exercises/.env"
+    }
+  }
+}
+```
+
+Pasos en VS Code:
+
+1. Abrir Command Palette.
+2. Ejecutar `MCP: Open Workspace Folder MCP Configuration`.
+3. Confirmar que aparece `aem4l3Github`.
+4. Iniciar el server y habilitar sus tools en Chat.
+5. Pedirle a Copilot/Agent que use el MCP para crear un repo privado o agregar un archivo.
 
 ## Auditoria
 
-Los eventos se guardan localmente en:
+Los eventos del MCP GitHub se guardan localmente en:
 
 ```text
 data/github_mcp_audit_log.jsonl
-data/support_mcp_audit_log.jsonl
 ```
 
-Esos logs estan ignorados por Git y no guardan tokens ni contenido completo de archivos.
+Ese log esta ignorado por Git y no guarda tokens.
