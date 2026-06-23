@@ -8,7 +8,7 @@ La progresion queda asi:
 
 | Archivo | Rol | Para que sirve |
 |---|---|---|
-| `e01_github_mcp_server.py` | MCP Server real | Expone GitHub como tools, resource y prompt por STDIO |
+| `e01_github_mcp_server.py` | MCP Server real | Expone GitHub como tools, resources y prompts por STDIO |
 | `e02_openai_host_usa_mcp_github.py` | Host de demostracion | Usa OpenAI + MCP Client para llamar al server GitHub |
 | `github_mcp_utils.py` | Helper interno | Ejecuta GitHub REST API y escribe audit log local |
 
@@ -53,17 +53,32 @@ Tools:
 - `github_upsert_file(owner, repo, path, content, commit_message, branch="main")`.
 - `github_get_repo(owner, repo)`.
 
-Resource:
+Resources:
 
 - `github://config`.
+- `github://capabilities`.
+- `github://security-policy`.
+- `github://audit/recent`.
+- `github://templates/readme-basic`.
 
-Prompt:
+Prompts:
 
 - `repo_bootstrap_prompt(project_name, goal)`.
+- `repo_readme_prompt(project_name, goal, audience="desarrolladores")`.
+- `safe_github_action_prompt(action_summary)`.
+- `repo_review_prompt(owner, repo)`.
+
+Regla docente:
+
+```text
+Tool ejecuta; resource informa; prompt guia.
+```
 
 ## Probar desde Antigravity
 
 Agregar este server MCP por STDIO:
+
+macOS:
 
 ```json
 {
@@ -81,10 +96,75 @@ Agregar este server MCP por STDIO:
 }
 ```
 
+Windows con `.venv` creada:
+
+```json
+{
+  "mcpServers": {
+    "aem4l3-github": {
+      "command": "C:/Users/Usuario/Desktop/Clases/AI_ENGINEERING_M4/.venv/Scripts/python.exe",
+      "args": [
+        "C:/Users/Usuario/Desktop/Clases/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises/AEM4L3_mcp/e01_github_mcp_server.py"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "ghp_..."
+      }
+    }
+  }
+}
+```
+
+Si aparece `executable file not found`, primero crear la venv e instalar dependencias:
+
+```powershell
+cd C:\Users\Usuario\Desktop\Clases\AI_ENGINEERING_M4
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r .\python_puro\AEM4_python_exercises\requirements.txt
+```
+
+Si no queres depender de `.venv`, podes usar el launcher de Windows `py`:
+
+```json
+{
+  "mcpServers": {
+    "aem4l3-github": {
+      "command": "py",
+      "args": [
+        "-3",
+        "C:/Users/Usuario/Desktop/Clases/AI_ENGINEERING_M4/python_puro/AEM4_python_exercises/AEM4L3_mcp/e01_github_mcp_server.py"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "ghp_..."
+      }
+    }
+  }
+}
+```
+
+En ese caso las dependencias tienen que estar instaladas en ese Python:
+
+```powershell
+py -3 -m pip install -r C:\Users\Usuario\Desktop\Clases\AI_ENGINEERING_M4\python_puro\AEM4_python_exercises\requirements.txt
+```
+
 Para probar en clase:
 
 ```text
 Usa el MCP aem4l3-github para crear un repositorio privado llamado aem4l3-mcp-demo y agregar un README.md inicial.
+```
+
+Para probar resources y prompts:
+
+```text
+Lee el resource github://capabilities del MCP aem4l3-github y explicame que tools tienen side effects.
+```
+
+```text
+Usa el prompt safe_github_action_prompt para revisar el riesgo antes de crear un repo privado llamado aem4l3-mcp-demo-antigravity.
+```
+
+```text
+Lee github://audit/recent y resumime las ultimas acciones ejecutadas sin mostrar secretos.
 ```
 
 ## Probar desde VS Code

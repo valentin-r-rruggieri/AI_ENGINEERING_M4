@@ -28,6 +28,8 @@ DATA_DIR = Path(__file__).parent / "data"
 AUDIT_LOG_PATH = DATA_DIR / "github_mcp_audit_log.jsonl"
 
 
+# 1) Esta capa concentra secrets y HTTP. El MCP server importa funciones de aca
+# para no mezclar protocolo MCP con detalles de la API REST de GitHub.
 def get_github_token() -> str:
     """Lee el token real de GitHub y falla antes de tocar la API si falta."""
     token = os.getenv("GITHUB_TOKEN", "").strip()
@@ -66,6 +68,8 @@ def github_request(
 
     El error evita imprimir secretos. GitHub nunca recibe logs con el token.
     """
+    # 2) Todas las tools pasan por esta funcion comun: headers, timeout,
+    # validacion de status y normalizacion del JSON quedan en un solo lugar.
     response = httpx.request(
         method,
         f"{GITHUB_API_URL}{path}",
@@ -93,6 +97,8 @@ def append_audit_event(tool_name: str, payload: dict[str, Any]) -> None:
     La auditoria muestra control operativo: quien ejecuto, que tool, contra que
     repo y cuando. Para clase es suficiente y evita guardar secretos por accidente.
     """
+    # 3) El audit log es local y deliberadamente chico: guarda metadata util
+    # para explicar trazabilidad, pero no contenido completo ni tokens.
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     safe_payload = {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -103,9 +109,25 @@ def append_audit_event(tool_name: str, payload: dict[str, Any]) -> None:
         file.write(json.dumps(safe_payload, ensure_ascii=False) + "\n")
 
 
+def read_recent_audit_events(limit: int = 10) -> list[dict[str, Any]]:
+    """Lee los ultimos eventos de auditoria sin fallar si todavia no hay log."""
+    if not AUDIT_LOG_PATH.exists():
+        return []
+    lines = AUDIT_LOG_PATH.read_text(encoding="utf-8").splitlines()
+    events: list[dict[str, Any]] = []
+    for line in lines[-limit:]:
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            events.append({"error": "invalid_audit_line"})
+    return events
+
+
 def create_repo(name: str, description: str, private: bool = True) -> dict[str, Any]:
     """Crea un repo real en GitHub y lo inicializa con branch main."""
     token = get_github_token()
+    # 4) Side effect real: POST /user/repos. El default `private=True` es una
+    # decision de seguridad del MCP, no una casualidad del prompt.
     result = github_request(
         "POST",
         "/user/repos",
@@ -139,6 +161,7 @@ def create_repo(name: str, description: str, private: bool = True) -> dict[str, 
 def get_repo(owner: str, repo: str) -> dict[str, Any]:
     """Lee metadata de un repo para que el cliente pueda verificar estado."""
     token = get_github_token()
+    # 5) Tool de lectura: permite verificar estado sin modificar GitHub.
     result = github_request("GET", f"/repos/{owner}/{repo}", token=token)
     append_audit_event(
         "github_get_repo",
@@ -181,6 +204,8 @@ def upsert_file(
 ) -> dict[str, Any]:
     """Crea o actualiza un archivo en GitHub con un commit real."""
     token = get_github_token()
+    # 6) GitHub necesita el SHA si el archivo ya existe. Por eso primero
+    # consultamos contenido y despues decidimos si crear o actualizar.
     sha = get_existing_file_sha(owner, repo, path, branch, token)
     encoded_content = base64.b64encode(content.encode("utf-8")).decode("ascii")
     payload: dict[str, Any] = {

@@ -32,6 +32,8 @@ from AEM4L3_mcp.github_mcp_utils import get_authenticated_login
 load_dotenv(ROOT_DIR / ".env")
 require_openai_api_key()
 
+# 1) Este archivo NO es el MCP Server. Es un Host de demo: usa OpenAI,
+# levanta el server por STDIO y consume las capacidades publicadas.
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 SERVER_PATH = Path(__file__).with_name("e01_github_mcp_server.py")
 
@@ -91,6 +93,8 @@ def choose_repo_tool(user_request: str, available_tools: list[dict[str, Any]]) -
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_openai import ChatOpenAI
 
+    # 2) El LLM no recibe una lista inventada: recibe las tools descubiertas
+    # desde el MCP Server con `list_tools()`.
     prompt = ChatPromptTemplate.from_messages(
         [
             (
@@ -116,6 +120,8 @@ async def run_host(user_request: str) -> None:
 
     require_github_token()
 
+    # 3) El Host lanza el MCP Server como subproceso local. STDIO significa que
+    # el cliente y el server intercambian mensajes por stdin/stdout.
     server_params = StdioServerParameters(
         command=sys.executable,
         args=[str(SERVER_PATH)],
@@ -126,6 +132,8 @@ async def run_host(user_request: str) -> None:
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
 
+            # 4) Discovery MCP: primero se listan capacidades, despues se decide
+            # que tool llamar. Esta es la diferencia contra wrappers ad hoc.
             tools_result = await session.list_tools()
             available_tools = [
                 {
@@ -138,6 +146,8 @@ async def run_host(user_request: str) -> None:
 
             decision = choose_repo_tool(user_request, available_tools)
             github_owner = get_authenticated_login()
+            # 5) La demo es idempotente: si el repo ya existe, no falla; lo
+            # reutiliza y solo actualiza README.md.
             existing_repo = await session.call_tool(
                 "github_get_repo",
                 arguments={"owner": github_owner, "repo": decision.args.name},
