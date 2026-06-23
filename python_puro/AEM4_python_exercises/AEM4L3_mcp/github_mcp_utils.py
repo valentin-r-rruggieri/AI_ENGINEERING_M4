@@ -38,6 +38,13 @@ def get_github_token() -> str:
     return token
 
 
+def get_authenticated_login() -> str:
+    """Devuelve el login asociado al token sin exponer el secreto."""
+    token = get_github_token()
+    result = github_request("GET", "/user", token=token)
+    return str(result["login"])
+
+
 def github_headers(token: str) -> dict[str, str]:
     """Centraliza headers para no repetirlos en cada tool."""
     return {

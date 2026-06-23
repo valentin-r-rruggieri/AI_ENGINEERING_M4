@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
 from common import require_openai_api_key, trace_json, trace_text
+from AEM4L3_mcp.github_mcp_utils import get_authenticated_login
 
 
 load_dotenv(ROOT_DIR / ".env")
@@ -136,17 +137,36 @@ async def run_host(user_request: str) -> None:
             ]
 
             decision = choose_repo_tool(user_request, available_tools)
-            create_result = await session.call_tool(
-                decision.tool_name,
-                arguments=decision.args.model_dump(mode="json"),
+            github_owner = get_authenticated_login()
+            existing_repo = await session.call_tool(
+                "github_get_repo",
+                arguments={"owner": github_owner, "repo": decision.args.name},
             )
-            create_payload = serialize_mcp_result(create_result)
+
+            if existing_repo.isError:
+                create_result = await session.call_tool(
+                    decision.tool_name,
+                    arguments=decision.args.model_dump(mode="json"),
+                )
+                if create_result.isError:
+                    raise RuntimeError(serialize_mcp_result(create_result))
+                create_payload = serialize_mcp_result(create_result)
+                structured = extract_structured_content(create_result)
+                repo_owner = structured["owner"]
+                repo_name = structured["name"]
+                default_branch = structured.get("default_branch", "main")
+            else:
+                existing_payload = extract_structured_content(existing_repo)
+                create_payload = {
+                    "reused_existing_repo": True,
+                    "repo": existing_payload,
+                }
+                repo_owner = github_owner
+                repo_name = decision.args.name
+                default_branch = existing_payload.get("default_branch", "main")
 
             # El segundo paso usa el owner/repo real devuelto por GitHub. Lo hace
             # el host porque depende del resultado de la primera tool.
-            structured = extract_structured_content(create_result)
-            repo_owner = structured["owner"]
-            repo_name = structured["name"]
             readme = (
                 f"# {repo_name}\n\n"
                 f"{decision.args.description}\n\n"
@@ -165,7 +185,7 @@ async def run_host(user_request: str) -> None:
                     "path": "README.md",
                     "content": readme,
                     "commit_message": "Add initial README from custom MCP",
-                    "branch": structured.get("default_branch", "main"),
+                    "branch": default_branch,
                 },
             )
 
