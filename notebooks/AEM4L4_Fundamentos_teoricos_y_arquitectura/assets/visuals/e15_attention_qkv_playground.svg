@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Self-attention + Q/K/V</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Cambiar token objetivo y observar que mira</text>
+  <rect x="105" y="240" width="250" height="95" rx="16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="230" y="296" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="900" fill="#111827">banco</text>
+<line x1="355" y1="286" x2="515" y2="205" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="355" y1="286" x2="515" y2="330" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="355" y1="286" x2="515" y2="455" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="515" y="165" width="260" height="80" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="645" y="216" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="800" fill="#111827">credito</text>
+<rect x="515" y="290" width="260" height="80" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="645" y="341" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="800" fill="#111827">cliente</text>
+<rect x="515" y="415" width="260" height="80" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="645" y="466" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="800" fill="#111827">plaza</text>
+<rect x="860" y="250" width="300" height="140" rx="16" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="1010" y="300" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">Q busca</text>
+<text x="1010" y="328" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">K ofrece</text>
+<text x="1010" y="356" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">V aporta</text>
+</svg>

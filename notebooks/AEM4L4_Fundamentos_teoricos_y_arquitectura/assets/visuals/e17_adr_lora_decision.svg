@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">ADR: decision final con LoRA</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Comparar alternativas y defender trade-offs</text>
+  <rect x="100" y="205" width="310" height="120" rx="16" fill="#FFE4E6" stroke="#E11D48" stroke-width="2"/>
+<text x="255" y="250" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">Grande + full FT</text>
+<text x="255" y="278" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">caro / lento</text>
+<rect x="485" y="205" width="310" height="120" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="640" y="250" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">Moderado + LoRA</text>
+<text x="640" y="278" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">balance recomendado</text>
+<rect x="870" y="205" width="310" height="120" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="1025" y="250" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">Chico sin adaptar</text>
+<text x="1025" y="278" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">rapido pero riesgoso</text>
+<line x1="640" y1="325" x2="640" y2="430" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="430" y="445" width="420" height="100" rx="16" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="640" y="485" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">ADR final</text>
+<text x="640" y="513" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">decision + fundamento + riesgos</text>
+</svg>

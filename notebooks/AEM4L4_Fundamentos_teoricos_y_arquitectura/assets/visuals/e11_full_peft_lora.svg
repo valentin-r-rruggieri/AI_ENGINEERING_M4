@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Full fine-tuning vs PEFT/LoRA</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Adaptar todo es caro; adapters pequenos son modulares</text>
+  <rect x="95" y="210" width="330" height="150" rx="16" fill="#FFE4E6" stroke="#E11D48" stroke-width="2"/>
+<text x="260" y="265" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">Full fine-tuning</text>
+<text x="260" y="293" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">entrena todo el modelo</text>
+<rect x="500" y="210" width="280" height="150" rx="16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="640" y="265" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">Modelo base</text>
+<text x="640" y="293" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="500" fill="#111827">congelado</text>
+<rect x="865" y="160" width="280" height="85" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="1005" y="213" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#111827">LoRA legal</text>
+<rect x="865" y="280" width="280" height="85" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="1005" y="333" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#111827">LoRA financiero</text>
+<rect x="865" y="400" width="280" height="85" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="1005" y="453" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#111827">LoRA medico</text>
+<line x1="780" y1="285" x2="865" y2="205" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="780" y1="285" x2="865" y2="325" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="780" y1="285" x2="865" y2="445" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="640" y="560" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="800" fill="#475569">PEFT = entrenar pocos parametros para adaptar rapido</text>
+</svg>

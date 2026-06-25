@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Anatomia del bloque Transformer</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Attention mezcla contexto, FFN refina, residual conserva</text>
+  <rect x="90" y="300" width="180" height="82" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="180.0" y="344" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Tokens</text>
+<rect x="304" y="300" width="180" height="82" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="394.0" y="344" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Attention</text>
+<rect x="518" y="300" width="180" height="82" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="608.0" y="344" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Add &amp; Norm</text>
+<rect x="732" y="300" width="180" height="82" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="822.0" y="344" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">FFN</text>
+<rect x="946" y="300" width="180" height="82" rx="14" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="1036.0" y="344" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Add &amp; Norm</text>
+<line x1="270" y1="340" x2="305" y2="340" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="520" y1="340" x2="555" y2="340" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="770" y1="340" x2="805" y2="340" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="1020" y1="340" x2="1055" y2="340" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="640" y="485" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="800" fill="#475569">El bloque se repite muchas veces dentro del Transformer</text>
+</svg>

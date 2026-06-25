@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Vocabulario, memoria y latencia</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">El tamano del vocabulario es un trade-off</text>
+  <rect x="120" y="245" width="300" height="120" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="270" y="290" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">Vocabulario chico</text>
+<text x="270" y="318" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">mas fragmentacion</text>
+<line x1="420" y1="305" x2="500" y2="305" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="500" y="245" width="280" height="120" rx="16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="640" y="290" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">Mas tokens</text>
+<text x="640" y="318" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">mas attention</text>
+<line x1="780" y1="305" x2="860" y2="305" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="860" y="245" width="300" height="120" rx="16" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="1010" y="290" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">Vocabulario enorme</text>
+<text x="1010" y="318" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">mas memoria</text>
+<text x="640" y="470" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="800" fill="#475569">La decision busca balance: cobertura, memoria y velocidad</text>
+</svg>

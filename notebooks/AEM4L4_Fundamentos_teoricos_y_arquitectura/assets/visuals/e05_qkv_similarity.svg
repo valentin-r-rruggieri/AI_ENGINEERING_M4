@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Query, Key, Value como buscador</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">La Query busca, la Key ofrece, el Value aporta informacion</text>
+  <rect x="90" y="250" width="260" height="95" rx="16" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="220" y="285" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">Query</text>
+<text x="220" y="313" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" fill="#111827">que busco?</text>
+<line x1="350" y1="298" x2="480" y2="298" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="480" y="190" width="230" height="80" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="595" y="240" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#111827">Key: credito</text>
+<rect x="480" y="325" width="230" height="80" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="595" y="375" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#111827">Key: plaza</text>
+<line x1="710" y1="230" x2="860" y2="230" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="710" y1="365" x2="860" y2="365" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="860" y="190" width="300" height="80" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+<text x="1010" y="240" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#111827">Value financiero</text>
+<rect x="860" y="325" width="300" height="80" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="1010" y="375" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#111827">Value asiento</text>
+<text x="640" y="520" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="800" fill="#7C3AED">Similitud alta -&gt; trae ese Value</text>
+</svg>

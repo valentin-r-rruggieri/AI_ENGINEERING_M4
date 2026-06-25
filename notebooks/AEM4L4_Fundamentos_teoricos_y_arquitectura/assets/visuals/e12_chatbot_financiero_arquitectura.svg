@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Chatbot financiero: decision integrada</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Tokenizacion + Transformer + LoRA + latencia</text>
+  <rect x="100" y="280" width="180" height="82" rx="14" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="190.0" y="324" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Consulta</text>
+<rect x="308" y="280" width="180" height="82" rx="14" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="398.0" y="324" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Tokenizer</text>
+<rect x="516" y="280" width="180" height="82" rx="14" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="606.0" y="324" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Transformer</text>
+<rect x="724" y="280" width="180" height="82" rx="14" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="814.0" y="324" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">LoRA</text>
+<rect x="932" y="280" width="180" height="82" rx="14" fill="#DBEAFE" stroke="#2563EB" stroke-width="2"/>
+<text x="1022.0" y="324" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Respuesta</text>
+<line x1="280" y1="320" x2="308" y2="320" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="516" y1="320" x2="544" y2="320" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="752" y1="320" x2="780" y2="320" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="988" y1="320" x2="1016" y2="320" stroke="#475569" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow)"/>
+<rect x="260" y="455" width="760" height="90" rx="16" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="640" y="510" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="900" fill="#111827">Restricciones: 600 ms + terminos nuevos + bajo costo</text>
+</svg>
