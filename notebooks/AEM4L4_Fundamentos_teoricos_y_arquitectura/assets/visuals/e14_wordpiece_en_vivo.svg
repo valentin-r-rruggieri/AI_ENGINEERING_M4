@@ -9,7 +9,7 @@
   </defs>
   <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
   <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
-  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">WordPiece en vivo</text>
+  <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">WordPiece paso a paso</text>
   <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Despues se muestra WordPiece separado</text>
   <rect x="110" y="230" width="340" height="90" rx="16" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
 <text x="280" y="285" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="27" font-weight="900" fill="#111827">financialization</text>

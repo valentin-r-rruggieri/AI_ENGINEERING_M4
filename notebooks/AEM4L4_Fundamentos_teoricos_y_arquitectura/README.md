@@ -1,27 +1,27 @@
 # AEM4L4 | Fundamentos teoricos y arquitectura
 
-Contiene 12 notebooks progresivos para dar una clase teorica desde lo mas basico. La idea no es resolver ejercicios largos de programacion, sino construir criterio: definiciones claras, ejemplos cotidianos, graficos Mermaid, tablas, una celda Python minima y tres actividades por tema.
+Contiene notebooks progresivos para aprender fundamentos de arquitectura de IA desde lo mas basico. La idea no es resolver ejercicios largos de programacion, sino construir criterio: definiciones claras, ejemplos cotidianos, graficos Mermaid, tablas, una celda Python minima y actividades por tema.
 
 Cada notebook incluye una imagen guia local en `assets/visuals/` para abrir el tema visualmente antes de ejecutar codigo. Los laboratorios tambien tienen imagenes para BPE, WordPiece, self-attention, Q/K/V, latencia, LoRA y ADR.
 
-| Orden | Notebook | Tema central | Uso docente |
+| Orden | Notebook | Tema central | Que vas a aprender |
 |---|---|---|---|
-| 1 | `E01_mapa_del_ai_engineer.ipynb` | Arquitectura antes que magia | Presentar la cadena completa: texto, tokens, modelo, adaptacion, latencia y evaluacion. |
+| 1 | `E01_mapa_del_ai_engineer.ipynb` | Arquitectura antes que magia | Ver la cadena completa: texto, tokens, modelo, adaptacion, latencia y evaluacion. |
 | 2 | `E02_texto_tokens_y_contexto_desde_cero.ipynb` | Texto, tokens y contexto | Bajar al nivel mas basico antes de hablar de Transformer. |
-| 3 | `E03_de_rnn_a_transformer_sin_misterio.ipynb` | RNN/LSTM vs Transformer | Explicar secuencialidad, paralelizacion y dependencias largas. |
-| 4 | `E04_self_attention_con_banco_y_contexto.ipynb` | Self-attention | Mostrar como el contexto desambigua palabras como `banco`. |
-| 5 | `E05_query_key_value_como_buscador.ipynb` | Query, Key y Value | Explicar Q/K/V con analogia de buscador, sin arrancar por formulas. |
+| 3 | `E03_de_rnn_a_transformer_sin_misterio.ipynb` | RNN/LSTM vs Transformer | Entender secuencialidad, paralelizacion y dependencias largas. |
+| 4 | `E04_self_attention_con_banco_y_contexto.ipynb` | Self-attention | Ver como el contexto desambigua palabras como `banco`. |
+| 5 | `E05_query_key_value_como_buscador.ipynb` | Query, Key y Value | Entender Q/K/V con analogia de buscador, sin arrancar por formulas. |
 | 6 | `E06_anatomia_del_bloque_transformer.ipynb` | Bloque Transformer | Ubicar attention, FFN, residuales y normalizacion en una cadena simple. |
 | 7 | `E07_por_que_attention_cuesta_n_cuadrado.ipynb` | Costo N cuadrado | Visualizar por que mas tokens pueden disparar latencia. |
 | 8 | `E08_tokenizacion_palabra_caracter_subword.ipynb` | Tokenizacion basica | Comparar palabra, caracter y subword. |
 | 9 | `E09_bpe_vs_wordpiece_en_lenguaje_simple.ipynb` | BPE vs WordPiece | Comparar dos estrategias de subword con ejemplos simples. |
 | 10 | `E10_vocabulario_memoria_y_latencia.ipynb` | Vocabulario y memoria | Conectar vocabulario, embeddings, fragmentacion y latencia. |
-| 11 | `E11_lora_y_peft_adaptar_sin_reentrenar_todo.ipynb` | PEFT y LoRA | Explicar adaptacion eficiente frente a full fine-tuning. |
+| 11 | `E11_lora_y_peft_adaptar_sin_reentrenar_todo.ipynb` | PEFT y LoRA | Entender adaptacion eficiente frente a full fine-tuning. |
 | 12 | `E12_chatbot_financiero_decisiones_de_arquitectura.ipynb` | Caso integrador | Cerrar con una decision tipo ADR para un chatbot financiero. |
 
-## Laboratorios visuales para probar frases en vivo
+## Laboratorios visuales para practicar
 
-Estos notebooks son complementarios. Estan pensados para abrirlos durante la explicacion, editar una lista de frases o restricciones y mostrar resultados visuales sin depender de APIs ni librerias externas.
+Estos notebooks son complementarios. Sirven para editar una lista de frases o restricciones y ver resultados visuales sin depender de APIs ni librerias externas.
 
 | Laboratorio | Mostrar despues de | Que permite probar |
 |---|---|---|
@@ -37,12 +37,12 @@ Estos notebooks son complementarios. Estan pensados para abrirlos durante la exp
 2. Mapa visual del tema en Mermaid.
 3. Tres ejemplos guiados.
 4. Una celda Python minima para visualizar el concepto.
-5. Interpretacion docente de la salida.
+5. Interpretacion de la salida.
 6. Tres actividades practicas minimas.
-7. Errores comunes y correccion docente.
+7. Errores comunes y como corregirlos.
 8. Cierre y puente al siguiente tema.
 
-## Progresion docente
+## Progresion de aprendizaje
 
 1. Primero se construye vocabulario basico: texto, tokens, contexto y arquitectura.
 2. Luego se explica por contraste: RNN/LSTM versus Transformer.

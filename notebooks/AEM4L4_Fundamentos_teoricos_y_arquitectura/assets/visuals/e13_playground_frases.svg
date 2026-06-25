@@ -10,7 +10,7 @@
   <rect x="0" y="0" width="1280" height="720" fill="#F8FAFC"/>
   <rect x="32" y="30" width="1216" height="660" rx="28" fill="white" stroke="#CBD5E1" filter="url(#shadow)"/>
   <text x="640.0" y="82" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Playground: frases -&gt; tokens</text>
-  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Probar entradas en vivo y ver alertas</text>
+  <text x="640.0" y="120" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="19" font-weight="500" fill="#475569">Probar entradas y ver alertas</text>
   <rect x="100" y="210" width="380" height="100" rx="16" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
 <text x="290" y="252" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">Frase corta</text>
 <text x="290" y="280" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="500" fill="#111827">Revisar saldo</text>
