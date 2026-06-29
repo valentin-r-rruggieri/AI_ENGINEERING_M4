@@ -1,0 +1,13 @@
+{
+  "sections_changed": [
+    "service_territory",
+    "use_restriction",
+    "controlled_disclosure"
+  ],
+  "topics_touched": [
+    "alcance territorial",
+    "restriccion de uso",
+    "difusion controlada a terceros"
+  ],
+  "summary_of_the_change": "Modificacion: el alcance territorial se amplia de Argentina a Argentina, Uruguay y Paraguay. Eliminacion: se remueve la clausula de restriccion de uso, permitiendo uso sin limite temporal. Adicion: se incorpora una clausula nueva de difusion controlada a subcontratistas bajo acuerdo previo."
+}

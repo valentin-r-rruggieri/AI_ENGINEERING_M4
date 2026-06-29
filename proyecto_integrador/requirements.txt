@@ -1,0 +1,22 @@
+# Dependencias del PIM4 LegalMove.
+# Versiones fijadas para garantizar reproducibilidad.
+
+# --- LangChain: orquestacion de agentes y LLM ---
+langchain>=1.3.0
+langchain-openai>=1.3.0
+langchain-core>=1.4.0
+
+# --- OpenAI: proveedor del LLM y Vision ---
+openai>=2.0.0
+
+# --- Pydantic: validacion de esquema de salida ---
+pydantic>=2.7.0
+
+# --- Langfuse: observabilidad y trazabilidad ---
+langfuse>=4.0.0
+
+# --- python-dotenv: manejo seguro de variables de entorno ---
+python-dotenv>=1.0.0
+
+# --- Pillow: generacion de imagenes de prueba ---
+Pillow>=10.0.0
