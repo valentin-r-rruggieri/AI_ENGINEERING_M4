@@ -56,9 +56,13 @@ source .venv/bin/activate
 # 2. Dependencias
 pip install -r requirements.txt
 
-# 3. Variables de entorno (solo necesario para el modo real con OpenAI/Langfuse)
-cp .env.example .env       # y completar las API keys
+# 3. Variables de entorno (OBLIGATORIO: requiere OPENAI_API_KEY)
+cp .env.example .env       # y completar las claves reales
 ```
+
+> Este proyecto llama a la **API real de OpenAI** (Vision + agentes). Necesitás un
+> `OPENAI_API_KEY` válido en `.env`. Las claves de Langfuse son opcionales: si no
+> las cargás, el pipeline corre igual y muestra solo la traza local.
 
 ---
 
@@ -76,9 +80,6 @@ Crea los 4 PNG (2 pares) y sus `expected.json` (resultados esperados / *golden c
 
 ### 2. Ejecutar el pipeline
 
-**Modo mock (sin API key, ideal para clase):** usa parsers y agentes simulados
-determinísticos, ejecuta el pipeline completo sin gastar tokens ni depender de la red.
-
 ```bash
 # Par 1 (simple)
 python src/main.py \
@@ -89,19 +90,14 @@ python src/main.py \
 python src/main.py \
   data/test_contracts/pair2_complex/contrato_original.png \
   data/test_contracts/pair2_complex/adenda_compleja.png
+
+# Sin enviar a Langfuse:
+python src/main.py contrato.png adenda.png --no-langfuse
 ```
 
-**Modo real (OpenAI Vision + Langfuse):** requiere las API keys en `.env`.
-
-```bash
-python src/main.py \
-  data/test_contracts/pair2_complex/contrato_original.png \
-  data/test_contracts/pair2_complex/adenda_compleja.png \
-  --real-api --langfuse
-```
-
-La salida imprime la **traza jerárquica** (5 spans con latencia y estado) y el
-**`ContractChangeOutput`** final validado por Pydantic.
+La salida imprime la **traza jerárquica local** (5 spans con latencia y estado), el
+**`ContractChangeOutput`** final validado por Pydantic y, si Langfuse está activo, la
+**URL de la traza** con tokens y costo.
 
 ---
 

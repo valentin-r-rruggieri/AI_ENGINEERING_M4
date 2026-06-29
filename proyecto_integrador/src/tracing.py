@@ -1,70 +1,59 @@
-"""Integracion con Langfuse para trazabilidad del pipeline.
+"""Integracion con Langfuse v4 para trazabilidad del pipeline (PRODUCCION).
 
 Por que Langfuse?
 -----------------
-Sin observabilidad, un fallo en el pipeline solo dice "se rompio". Con Langfuse,
-podemos ver exactamente en que span fallo, que input recibio, que output produjo,
-cuanto tardo y cuantos tokens consumo. Esto es obligatorio para un entorno de
-produccion legal donde cada decision debe ser auditable.
+Sin observabilidad, un fallo solo dice "se rompio". Con Langfuse vemos en que
+span fallo, que input recibio, que output produjo, cuanto tardo y cuantos tokens
+(= costo) consumo. Obligatorio en un dominio legal auditable.
 
-Como funciona la integracion con LangChain
-------------------------------------------
-Langfuse provee un CallbackHandler que se inyecta en cada llamada a ChatOpenAI
-mediante el parametro config={"callbacks": [handler]}. Cuando LangChain ejecuta
-el modelo, el handler registra automaticamente:
-- Input (messages)
-- Output (response)
-- Latencia
-- Token usage (prompt_tokens, completion_tokens, total_tokens)
-- Costo estimado
-
-Estructura de jerarquia de spans esperada en el dashboard de Langfuse
----------------------------------------------------------------------
-    contract-analysis (trace raiz)
-    |-- parse_original_contract (span)
-    |-- parse_amendment_contract (span)
-    |-- contextualization_agent (span)
-    |-- extraction_agent (span)
-    |-- pydantic_validation (span)
-
-Cada span tiene su input, output, latencia y metadata.
+Como funciona en Langfuse v4 (basado en OpenTelemetry)
+------------------------------------------------------
+- El cliente se obtiene con get_client(), que lee de las variables de entorno:
+  LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST.
+- El CallbackHandler() de LangChain NO recibe claves: se vincula al cliente global
+  y, gracias al contexto de OpenTelemetry, anida sus llamadas bajo el span activo.
+- En pipeline.py envolvemos todo el pipeline en
+  client.start_as_current_observation(name="contract-analysis") para que las 5
+  etapas queden como spans hijos de un unico trace raiz.
 """
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 
-def get_langfuse_handler(trace_name: str = "contract-analysis") -> Any:
-    """Crea un CallbackHandler de Langfuse para tracear el pipeline.
+def get_langfuse_client() -> Any:
+    """Devuelve el cliente Langfuse si hay credenciales validas, o None.
 
-    Lee las credenciales de las variables de entorno:
-    - LANGFUSE_PUBLIC_KEY
-    - LANGFUSE_SECRET_KEY
-    - LANGFUSE_HOST (opcional, default: cloud.langfuse.com)
+    Lee las credenciales del entorno (LANGFUSE_PUBLIC_KEY/SECRET_KEY/HOST) y
+    valida con auth_check(). Si faltan claves o la autenticacion falla, devuelve
+    None y el pipeline corre solo con la traza local (degradacion elegante).
+    """
+    try:
+        from langfuse import get_client
+    except ImportError:
+        print("[tracing] Langfuse no esta instalado. Se usara solo traza local.")
+        return None
 
-    Si Langfuse no esta instalado o faltan credenciales, devuelve None.
-    En ese caso, el pipeline sigue funcionando con una traza local (Trace/Span)
-    definida en pipeline.py, para no bloquear el desarrollo sin observabilidad.
+    try:
+        client = get_client()
+        if not client.auth_check():
+            print("[tracing] auth_check fallo: revisa LANGFUSE_PUBLIC_KEY/SECRET_KEY/HOST.")
+            return None
+        return client
+    except Exception as exc:  # noqa: BLE001 - cualquier fallo => degradar a traza local
+        print(f"[tracing] No se pudo inicializar Langfuse ({exc}). Se usara solo traza local.")
+        return None
 
-    Args:
-        trace_name: nombre de la traza raiz en el dashboard de Langfuse.
 
-    Returns:
-        CallbackHandler de langfuse.langchain, o None si no hay configuracion.
+def get_langfuse_handler() -> Any:
+    """Crea el CallbackHandler de LangChain para Langfuse.
+
+    En v4 no recibe claves: usa el cliente global ya inicializado y se anida
+    automaticamente bajo el span activo de OpenTelemetry.
     """
     try:
         from langfuse.langchain import CallbackHandler
     except ImportError:
-        print("[tracing] Langfuse no esta instalado. Se usara traza local.")
         return None
-
-    public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
-    secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-    if not public_key or not secret_key:
-        print("[tracing] Faltan credenciales LANGFUSE_PUBLIC_KEY/SECRET_KEY. Se usara traza local.")
-        return None
-
-    handler = CallbackHandler(public_key=public_key)
-    return handler
+    return CallbackHandler()
