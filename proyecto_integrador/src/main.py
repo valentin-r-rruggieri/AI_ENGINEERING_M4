@@ -1,86 +1,169 @@
 """Entry point CLI para el pipeline LegalMove (PRODUCCION).
 
-Uso
----
-    # Requiere OPENAI_API_KEY (y opcionalmente claves de Langfuse) en .env
-    python src/main.py \
-        data/test_contracts/pair1_simple/contrato_original.png \
-        data/test_contracts/pair1_simple/adenda_simple.png
+Formas de ejecutar
+------------------
+1. Sin argumentos (usa los archivos definidos abajo en "ARCHIVOS A COMPARAR"):
+       python src/main.py
+   o en VS Code: Run -> Run Without Debugging (Ctrl+F5).
 
-    # Sin enviar a Langfuse:
-    python src/main.py contrato.png adenda.png --no-langfuse
+2. Pasando tus propias imagenes:
+       python src/main.py ruta/contrato.png ruta/adenda.png
 
-Argumentos
-----------
-- original_path (posicional): ruta a la imagen del contrato original.
-- amendment_path (posicional): ruta a la imagen de la adenda/enmienda.
-- --no-langfuse: desactiva el envio de trazas a Langfuse (por defecto: activo).
+3. Sin enviar a Langfuse:  agregar  --no-langfuse
+
+Requiere OPENAI_API_KEY en el archivo .env (Langfuse es opcional).
+La salida usa `rich` (colores, paneles, spinners) para diferenciar cada etapa.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
+import sys
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from pipeline import run_pipeline
 
+# Fuerza UTF-8 para tildes/ñ y emojis en cualquier terminal de Windows.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+# Rich para una salida visual y diferenciada (ideal para dar la clase).
+# Si no esta instalado, caemos a texto plano (no rompe). Para verlo lindo:
+#     pip install rich        (o:  pip install -r requirements.txt)
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich import box
+
+    console = Console()
+    HAS_RICH = True
+except ImportError:
+    console = None
+    HAS_RICH = False
+    print("[aviso] 'rich' no esta instalado: se usara salida de texto plano.")
+    print("        Para la version visual:  pip install rich\n")
+
+# Raiz del proyecto (proyecto_integrador/). Resuelve el .env y las rutas por
+# defecto SIN depender del directorio desde el que se ejecute.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ============================================================================
+#  ✏️  ARCHIVOS A COMPARAR  (editá acá para cambiar los documentos)
+#  Estas rutas se usan cuando ejecutás main.py SIN pasar argumentos.
+# ============================================================================
+ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair1_simple/contrato_original.png"
+ARCHIVO_ADENDA            = "data/test_contracts/pair1_simple/adenda_simple.png"
+# Ejemplos para el Par 2 (complejo) — descomentá para usarlo:
+# ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair2_complex/contrato_original.png"
+# ARCHIVO_ADENDA            = "data/test_contracts/pair2_complex/adenda_compleja.png"
+# ============================================================================
+
+_DEFAULT_ORIGINAL = str(BASE_DIR / ARCHIVO_CONTRATO_ORIGINAL)
+_DEFAULT_AMENDMENT = str(BASE_DIR / ARCHIVO_ADENDA)
+
+
+def _panel_encabezado(args) -> None:
+    """Imprime el encabezado y los parametros de la corrida."""
+    langfuse_txt = "desactivado" if args.no_langfuse else "activo (si hay credenciales)"
+    if not HAS_RICH:
+        print("=" * 70)
+        print("  LegalMove · Comparador de contratos (PRODUCCION)")
+        print("=" * 70)
+        print(f"  Contrato original : {Path(args.original_path).name}")
+        print(f"  Adenda            : {Path(args.amendment_path).name}")
+        print(f"  Langfuse          : {langfuse_txt}")
+        return
+    console.print(
+        Panel(
+            "[bold]⚖️  LegalMove[/] · Comparador de contratos con Vision + Agentes\n"
+            "[dim]Modo PRODUCCIÓN (API real de OpenAI)[/]",
+            border_style="cyan",
+            box=box.DOUBLE,
+        )
+    )
+    info = Table.grid(padding=(0, 2))
+    info.add_column(style="bold")
+    info.add_column()
+    info.add_row("📄 Contrato original", Path(args.original_path).name)
+    info.add_row("📝 Adenda", Path(args.amendment_path).name)
+    info.add_row("📊 Langfuse", "[red]desactivado[/]" if args.no_langfuse else "[green]activo[/] (si hay credenciales)")
+    console.print(info)
+
+
+def _panel_resultado(output) -> None:
+    """Muestra el ContractChangeOutput en una tabla dentro de un panel verde."""
+    if not HAS_RICH:
+        print("\n" + "=" * 70)
+        print("  RESULTADO — Cambios detectados en la adenda")
+        print("=" * 70)
+        print("  Secciones : " + ", ".join(output.sections_changed))
+        print("  Temas     : " + ", ".join(output.topics_touched))
+        print("  Resumen   : " + output.summary_of_the_change)
+        return
+    tabla = Table(show_header=False, box=box.SIMPLE, expand=True)
+    tabla.add_column(style="bold cyan", no_wrap=True, ratio=1)
+    tabla.add_column(ratio=4)
+    tabla.add_row("📑 Secciones", "\n".join(f"• {s}" for s in output.sections_changed))
+    tabla.add_row("🏷️  Temas", "\n".join(f"• {t}" for t in output.topics_touched))
+    tabla.add_row("📝 Resumen", output.summary_of_the_change)
+    console.print(
+        Panel(tabla, title="[bold]📦 Cambios detectados en la adenda", border_style="green")
+    )
+
 
 def main() -> None:
     """Entry point del CLI. Parsea argumentos y ejecuta el pipeline real."""
-    # Carga OPENAI_API_KEY, LANGFUSE_* y demas variables desde .env.
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    load_dotenv(BASE_DIR / ".env")
 
     parser = argparse.ArgumentParser(
         description="LegalMove PIM4 - Comparador de contratos con Vision y Agentes (produccion).",
     )
     parser.add_argument(
-        "original_path",
-        type=str,
-        help="Ruta a la imagen del contrato original (PNG/JPG/JPEG).",
+        "original_path", type=str, nargs="?", default=_DEFAULT_ORIGINAL,
+        help="Ruta a la imagen del contrato original (PNG/JPG/JPEG). Default: definido en el codigo.",
     )
     parser.add_argument(
-        "amendment_path",
-        type=str,
-        help="Ruta a la imagen de la adenda o enmienda (PNG/JPG/JPEG).",
+        "amendment_path", type=str, nargs="?", default=_DEFAULT_AMENDMENT,
+        help="Ruta a la imagen de la adenda (PNG/JPG/JPEG). Default: definido en el codigo.",
     )
     parser.add_argument(
-        "--no-langfuse",
-        action="store_true",
+        "--no-langfuse", action="store_true",
         help="Desactiva el envio de trazas a Langfuse (por defecto esta activo).",
     )
     args = parser.parse_args()
 
-    print("=" * 78)
-    print("LegalMove PIM4 - Pipeline de comparacion de contratos (PRODUCCION)")
-    print("=" * 78)
-    print(f"  Contrato original: {args.original_path}")
-    print(f"  Adenda:            {args.amendment_path}")
-    print(f"  Langfuse:          {'INACTIVO (--no-langfuse)' if args.no_langfuse else 'ACTIVO (si hay credenciales)'}")
-    print()
+    _panel_encabezado(args)
+    if HAS_RICH:
+        console.rule("[bold]🚀 Pipeline: Vision → Agente 1 → Agente 2 → Validación")
+    else:
+        print("\n--- Ejecutando pipeline: Vision -> Agente 1 -> Agente 2 -> Validacion ---")
 
+    inicio = time.perf_counter()
     result = run_pipeline(
         original_path=args.original_path,
         amendment_path=args.amendment_path,
         use_langfuse=not args.no_langfuse,
     )
+    total = time.perf_counter() - inicio
 
-    print("=" * 78)
-    print("TRAZA DE EJECUCION (local)")
-    print("=" * 78)
-    result.trace.print_tree()
+    _panel_resultado(result.output)
 
-    print()
-    print("=" * 78)
-    print("OUTPUT FINAL (ContractChangeOutput validado)")
-    print("=" * 78)
-    print(json.dumps(result.output.model_dump(mode="json"), ensure_ascii=False, indent=2))
-
-    if result.trace_url:
-        print()
-        print(f"[Langfuse] Traza completa con tokens y latencia:\n           {result.trace_url}")
+    if HAS_RICH:
+        estado = "[bold green]✅ OK[/]" if result.trace.success else "[bold red]❌ FALLÓ[/]"
+        console.print(f"\n⏱️  [bold]Tiempo total:[/] {total:.1f}s   ·   Estado: {estado}")
+        if result.trace_url:
+            console.print(f"🔗 [bold]Langfuse:[/] [link={result.trace_url}]{result.trace_url}[/link]")
+    else:
+        estado = "OK" if result.trace.success else "FALLO"
+        print(f"\nTiempo total: {total:.1f}s   ·   Estado: {estado}")
+        if result.trace_url:
+            print(f"Langfuse: {result.trace_url}")
 
 
 if __name__ == "__main__":

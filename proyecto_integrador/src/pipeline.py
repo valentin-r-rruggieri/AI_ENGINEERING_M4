@@ -37,6 +37,49 @@ from agents.contextualization_agent import ContextualizationAgent
 from agents.extraction_agent import ExtractionAgent
 from tracing import get_langfuse_client, get_langfuse_handler
 
+# Rich da colores, spinners y paneles para diferenciar las salidas en clase.
+# Si no esta instalado, el pipeline cae a print() plano (degradacion elegante).
+try:
+    from rich.console import Console
+
+    _console: Console | None = Console()
+except ImportError:
+    _console = None
+
+
+def _start_status(verbose: bool, paso: str, display: str):
+    """Devuelve un context manager para la etapa (spinner rich o texto plano)."""
+    if not verbose:
+        return nullcontext()
+    if _console is not None:
+        return _console.status(f"[bold cyan]Paso {paso}[/] · {display}", spinner="dots")
+    print(f"\n  ▶  Paso {paso} · {display}", flush=True)
+    return nullcontext()
+
+
+def _report_ok(verbose: bool, paso: str, display: str, dur: float, result: Any) -> None:
+    """Informa que una etapa terminó bien (con color si hay rich)."""
+    if not verbose:
+        return
+    detalle = f" · {len(result)} caracteres" if isinstance(result, str) else ""
+    if _console is not None:
+        _console.print(
+            f"  [bold green]✅ Paso {paso}[/] · {display} "
+            f"[dim]({dur:.1f}s{detalle})[/]"
+        )
+    else:
+        print(f"     ✅ Listo en {dur:.1f}s{detalle}", flush=True)
+
+
+def _report_fail(verbose: bool, paso: str, display: str, err: str) -> None:
+    """Informa que una etapa falló (en rojo si hay rich)."""
+    if not verbose:
+        return
+    if _console is not None:
+        _console.print(f"  [bold red]❌ Paso {paso}[/] · {display} — {err}")
+    else:
+        print(f"     ❌ Falló: {err}", flush=True)
+
 
 @dataclass
 class Span:
@@ -58,6 +101,9 @@ class Trace:
     contract_id: str
     spans: list[Span] = field(default_factory=list)
     success: bool = False
+    verbose: bool = False          # si True, imprime logs en vivo por etapa
+    total_steps: int = 0           # total de pasos (para mostrar "Paso x/N")
+    step_count: int = 0            # contador interno de pasos ya iniciados
 
     def run_span(
         self,
@@ -65,8 +111,17 @@ class Trace:
         input_preview: str,
         fn: Callable[[], Any],
         metadata: dict[str, Any] | None = None,
+        label: str | None = None,
     ) -> Any:
-        """Ejecuta fn() dentro de un span que mide latencia y captura errores."""
+        """Ejecuta fn() dentro de un span que mide latencia y captura errores.
+
+        Si verbose=True, imprime en vivo el inicio y el fin de cada etapa con
+        su duracion, para que se vea puntualmente que sucede en cada parte.
+        """
+        self.step_count += 1
+        display = label or name
+        paso = f"{self.step_count}/{self.total_steps}" if self.total_steps else f"{self.step_count}"
+
         span = Span(
             name=name,
             input_preview=_preview(input_preview),
@@ -74,11 +129,16 @@ class Trace:
         )
         start = time.perf_counter()
         try:
-            result = fn()
+            # El spinner (rich) anima mientras corre la etapa; al terminar se
+            # imprime la linea de OK con la duracion.
+            with _start_status(self.verbose, paso, display):
+                result = fn()
             span.output_preview = _preview(_dump_for_preview(result))
+            _report_ok(self.verbose, paso, display, time.perf_counter() - start, result)
             return result
         except Exception as exc:
             span.error = f"{type(exc).__name__}: {exc}"
+            _report_fail(self.verbose, paso, display, span.error)
             raise
         finally:
             span.latency_ms = (time.perf_counter() - start) * 1000
@@ -148,6 +208,7 @@ def run_pipeline(
     original_path: str | Path,
     amendment_path: str | Path,
     use_langfuse: bool = True,
+    verbose: bool = True,
 ) -> PipelineResult:
     """Ejecuta el pipeline completo de comparacion de contratos (API real).
 
@@ -165,7 +226,12 @@ def run_pipeline(
     handler = get_langfuse_handler() if client else None
     callbacks = [handler] if handler else None
 
-    trace = Trace(name="contract-analysis", contract_id=Path(amendment_path).stem)
+    trace = Trace(
+        name="contract-analysis",
+        contract_id=Path(amendment_path).stem,
+        verbose=verbose,
+        total_steps=5,
+    )
     trace_url: str | None = None
 
     # Span raiz de Langfuse: hace que todas las llamadas al LLM queden anidadas
@@ -186,6 +252,7 @@ def run_pipeline(
                     original_path, "Contrato original", callbacks=callbacks
                 ),
                 metadata={"document_label": "Contrato original"},
+                label="👁️  Leyendo el contrato original con GPT-4o Vision",
             )
 
             # --- Etapa 2: Parsing de la adenda ---
@@ -196,6 +263,7 @@ def run_pipeline(
                     amendment_path, "Adenda o enmienda", callbacks=callbacks
                 ),
                 metadata={"document_label": "Adenda o enmienda"},
+                label="👁️  Leyendo la adenda con GPT-4o Vision",
             )
 
             # --- Etapa 3: Contextualizacion (Agente 1) ---
@@ -205,6 +273,7 @@ def run_pipeline(
                 "original_text + amendment_text",
                 lambda: contextualizer.run(original_text, amendment_text, callbacks=callbacks),
                 metadata={"agent": "ContextualizationAgent", "model": contextualizer.model},
+                label="🧭 Agente 1 · Contextualización (mapa de secciones)",
             )
 
             # --- Etapa 4: Extraccion (Agente 2) ---
@@ -214,6 +283,7 @@ def run_pipeline(
                 "context_map + original_text + amendment_text",
                 lambda: extractor.run(original_text, amendment_text, context_map, callbacks=callbacks),
                 metadata={"agent": "ExtractionAgent", "model": extractor.model},
+                label="🔍 Agente 2 · Extracción de cambios (adiciones/eliminaciones/modificaciones)",
             )
 
             # --- Etapa 5: Validacion Pydantic (frontera final de produccion) ---
@@ -222,6 +292,7 @@ def run_pipeline(
                 "ContractChangeOutput",
                 lambda: validate_contract_change_output(output.model_dump(mode="json")),
                 metadata={"schema": "ContractChangeOutput"},
+                label="✅ Validación final con Pydantic",
             )
 
             trace.success = True

@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PIM4: Par 1 (simple)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/proyecto_integrador/src/main.py",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": [
+        "data/test_contracts/pair1_simple/contrato_original.png",
+        "data/test_contracts/pair1_simple/adenda_simple.png"
+      ],
+      "cwd": "${workspaceFolder}/proyecto_integrador",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "PIM4: Par 2 (complejo)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/proyecto_integrador/src/main.py",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": [
+        "data/test_contracts/pair2_complex/contrato_original.png",
+        "data/test_contracts/pair2_complex/adenda_compleja.png"
+      ],
+      "cwd": "${workspaceFolder}/proyecto_integrador",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "PIM4: Par 1 sin Langfuse",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/proyecto_integrador/src/main.py",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": [
+        "data/test_contracts/pair1_simple/contrato_original.png",
+        "data/test_contracts/pair1_simple/adenda_simple.png",
+        "--no-langfuse"
+      ],
+      "cwd": "${workspaceFolder}/proyecto_integrador",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

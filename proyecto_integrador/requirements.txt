@@ -20,3 +20,6 @@ python-dotenv>=1.0.0
 
 # --- Pillow: generacion de imagenes de prueba ---
 Pillow>=10.0.0
+
+# --- Rich: salida de consola con colores, paneles y spinners (clase/demo) ---
+rich>=13.0.0
