@@ -16,6 +16,7 @@ leer/estudiar; estos scripts son para la demo visual en consola).
 | `demo_2_serverless_vs_server.py` | Despliegue | Cold start vs latencia estable (simulado) + función de decisión por caso. |
 | `demo_3_cprofile.py` | Profiling | Hotspots con `cProfile` y comparación lento vs optimizado (speedup). |
 | `demo_4_async_vs_secuencial.py` | Concurrencia | Barra de progreso y cronómetro: secuencial (~2.5 s) vs async (~0.5 s). |
+| `demo_5_finetuning_lora_huggingface.py` | Fine-tuning LoRA | Código real de `transformers` + `peft` paso a paso (explicado, NO entrena). |
 
 ## Cómo correrlos
 
@@ -28,6 +29,7 @@ python demo_1_lora_peft.py
 python demo_2_serverless_vs_server.py
 python demo_3_cprofile.py
 python demo_4_async_vs_secuencial.py
+python demo_5_finetuning_lora_huggingface.py
 ```
 
 > Cada script fuerza la salida a UTF-8, así los emojis y tildes se ven bien en
