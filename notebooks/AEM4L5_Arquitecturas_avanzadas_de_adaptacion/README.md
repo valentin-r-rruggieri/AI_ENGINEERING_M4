@@ -1,38 +1,47 @@
 # AEM4L5 | Arquitecturas avanzadas de adaptación
 
-Secuencia de notebooks para dar una clase teórico-práctica sobre adaptación eficiente, serving, profiling y concurrencia en sistemas de IA.
+Notebooks **teórico-pedagógicos** para dar la clase sobre adaptación eficiente (LoRA/PEFT),
+patrones de despliegue (serverless vs servidor), profiling y concurrencia (`cProfile`, `asyncio`)
+en sistemas de IA, con **Python + LangChain**.
 
-La idea de uso es: explicar el gráfico y la teoría mínima, ejecutar una celda pequeña, discutir la decisión de arquitectura y cerrar con un ejercicio aplicado.
+Cada notebook combina teoría extensa, glosario, tablas comparativas, diagramas **Mermaid** y
+código mínimo **ejecutable sin API key** (el modelo se simula con `RunnableLambda`).
 
 ## Recorrido recomendado
 
-| Orden | Notebook | Rol en clase |
+| Orden | Notebook | Tema |
 |---|---|---|
-| 1 | `E01_resuelto_full_finetuning_vs_lora.ipynb` | Comparar full fine-tuning contra LoRA/PEFT con storage y criterio de decisión. |
-| 2 | `E02_resuelto_elegir_despliegue.ipynb` | Elegir serverless, servidor persistente o híbrido según tráfico, latencia y costo. |
-| 3 | `E03_resuelto_cprofile_basico.ipynb` | Leer `cProfile`, interpretar `ncalls`, `tottime`, `cumtime` y detectar hotspots. |
-| 4 | `E04_resuelto_asyncio_io.ipynb` | Comparar ejecución secuencial contra async para tareas I/O-bound. |
-| 5 | `E07_inicial_cpu_bound_io_bound.ipynb` | Clasificar cuellos de botella antes de elegir herramienta. |
-| 6 | `E05_para_resolver_arquitectura_resumenes.ipynb` | Diseñar una arquitectura de resúmenes con adaptación y serving. |
-| 7 | `E06_para_resolver_optimizar_pipeline_lento.ipynb` | Perfilar y optimizar un pipeline lento con evidencia. |
-| 8 | `E08_avanzado_production_architecture_plan.ipynb` | Integrar LoRA, serverless, cProfile, async y métricas en un plan de producción. |
+| 1 | `AEM4L5_N1_LoRA_PEFT_Adaptacion.ipynb` | Adaptación eficiente: full fine-tuning vs LoRA/PEFT y rol de LangChain. |
+| 2 | `AEM4L5_N2_Deploy_Serverless_Servidor.ipynb` | Patrones de despliegue: serverless vs servidor persistente. |
+| 3 | `AEM4L5_N3_Profiling_Async_LangChain.ipynb` | Rendimiento: `cProfile`, CPU/IO-bound, `asyncio` y async en LangChain. |
+| 4 | `AEM4L5_N4_Caso_Integrador.ipynb` | Arquitectura end-to-end que integra N1–N3. |
 
-## Conceptos cubiertos
+## Estructura de cada notebook
 
-- **LoRA / PEFT:** adaptar entrenando adapters livianos sobre un modelo base congelado.
-- **Full fine-tuning:** entrenar todos o casi todos los parámetros cuando la adaptación debe ser profunda.
-- **Pipeline observable:** preparar datos, configurar adapter, entrenar, evaluar, versionar y servir.
-- **Serverless:** pagar por uso y escalar a cero, aceptando posible cold start.
-- **Servidor persistente:** mantener modelo cargado para baja latencia estable.
-- **cProfile:** medir llamadas, tiempo propio y tiempo acumulado antes de optimizar.
-- **CPU-bound vs I/O-bound:** separar cálculo local de espera por red, storage, APIs o DB.
-- **asyncio:** solapar esperas I/O-bound con `async`, `await` y `gather`.
+1. Título · 2. Objetivo · 3. Mapa visual (Mermaid) · 4. Glosario · 5. Teoría paso a paso ·
+6. Tabla comparativa · 7. Gráfico Mermaid · 8. Mini ejemplo · 9. Código Python + LangChain ·
+10. Ejercicio guiado · 11. Preguntas de interpretación · 12. Errores comunes · 13. Cierre.
+
+## Setup
+
+Cada notebook trae su propia celda de setup. Solo requiere:
+
+```python
+!pip install -q langchain-core
+```
+
+No necesita API key, GPU ni `langchain-openai` (este último es opcional y queda comentado).
+Los ejemplos `asyncio` usan `await main()` (no `asyncio.run()`), pensados para Jupyter/Colab.
+
+## Notas importantes
+
+- **LangChain no entrena LoRA.** LoRA/PEFT se entrena con `transformers`, `peft`, `accelerate`
+  o servicios externos. LangChain **consume** modelos ya adaptados y **orquesta** prompts,
+  routing, chains y endpoints. Esto se explica en el N1.
+- Si Jupyter/Colab no renderiza Mermaid, copiá el bloque a [Mermaid Live](https://mermaid.live).
 
 ## Relación con Python puro
 
-Después de explicar estos notebooks, usar los scripts de `python_puro/AEM4_python_exercises/AEM4L5_adaptacion_serving/` para llevar la teoría a casos ejecutables con OpenAI real:
-
-- Medición de cold start y decisión de serving.
-- Profiling de CPU-bound y etapa LLM como I/O.
-- Comparación secuencial vs async con llamadas reales.
-- Ejercicio integrador de arquitectura de producción.
+Para llevar la teoría a casos ejecutables con OpenAI real, ver los scripts de
+`python_puro/AEM4_python_exercises/AEM4L5_adaptacion_serving/` (cold start y serving, profiling
+de CPU vs etapa LLM como I/O, secuencial vs async, e integrador de arquitectura).
