@@ -1,0 +1,11 @@
+{
+  "sections_changed": [
+    "precio",
+    "tiempo_respuesta"
+  ],
+  "topics_touched": [
+    "precio del servicio",
+    "tiempo de respuesta"
+  ],
+  "summary_of_the_change": "El tiempo de respuesta se reduce de 48 a 24 horas y el precio sube de $80.000 a $95.000."
+}

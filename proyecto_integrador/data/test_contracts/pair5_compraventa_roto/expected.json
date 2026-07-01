@@ -1,0 +1,11 @@
+{
+  "sections_changed": [
+    "plazo_entrega",
+    "financiacion"
+  ],
+  "topics_touched": [
+    "plazo de entrega",
+    "financiacion en cuotas"
+  ],
+  "summary_of_the_change": "El plazo de entrega se extiende de 30 a 45 dias y se agrega una clausula de financiacion en 3 cuotas sin interes."
+}

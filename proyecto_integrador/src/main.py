@@ -59,9 +59,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================================================
 ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair1_simple/contrato_original.png"
 ARCHIVO_ADENDA            = "data/test_contracts/pair1_simple/adenda_simple.png"
-# Ejemplos para el Par 2 (complejo) — descomentá para usarlo:
+# Otros casos — descomentá el par que quieras probar:
+# Par 2 (complejo):
 # ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair2_complex/contrato_original.png"
 # ARCHIVO_ADENDA            = "data/test_contracts/pair2_complex/adenda_compleja.png"
+# Par 3 (manchado con café):
+# ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair3_alquiler_cafe/contrato_original.png"
+# ARCHIVO_ADENDA            = "data/test_contracts/pair3_alquiler_cafe/adenda.png"
+# Par 4 (borroso):
+# ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair4_laboral_borroso/contrato_original.png"
+# ARCHIVO_ADENDA            = "data/test_contracts/pair4_laboral_borroso/adenda.png"
+# Par 5 (roto/rasgado):
+# ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair5_compraventa_roto/contrato_original.png"
+# ARCHIVO_ADENDA            = "data/test_contracts/pair5_compraventa_roto/adenda.png"
+# Par 6 (extremo: café + blur + ruido + rotación):
+# ARCHIVO_CONTRATO_ORIGINAL = "data/test_contracts/pair6_extremo/contrato_original.png"
+# ARCHIVO_ADENDA            = "data/test_contracts/pair6_extremo/adenda.png"
 # ============================================================================
 
 _DEFAULT_ORIGINAL = str(BASE_DIR / ARCHIVO_CONTRATO_ORIGINAL)
@@ -145,11 +158,26 @@ def main() -> None:
         print("\n--- Ejecutando pipeline: Vision -> Agente 1 -> Agente 2 -> Validacion ---")
 
     inicio = time.perf_counter()
-    result = run_pipeline(
-        original_path=args.original_path,
-        amendment_path=args.amendment_path,
-        use_langfuse=not args.no_langfuse,
-    )
+    try:
+        result = run_pipeline(
+            original_path=args.original_path,
+            amendment_path=args.amendment_path,
+            use_langfuse=not args.no_langfuse,
+        )
+    except Exception as exc:
+        # Fallo controlado: p. ej. un documento demasiado degradado/ilegible hace
+        # que el modelo no extraiga cambios válidos y Pydantic lo rechace.
+        detalle = (
+            f"{type(exc).__name__}: {exc}\n\n"
+            "Causa probable: el documento estaba demasiado degradado o ilegible y el "
+            "modelo no pudo extraer cambios válidos. La validación evitó devolver un "
+            "resultado inventado. Probá con una imagen más legible."
+        )
+        if HAS_RICH:
+            console.print(Panel(detalle, title="[bold red]❌ El pipeline no pudo completar", border_style="red"))
+        else:
+            print("\nERROR — el pipeline no pudo completar:\n" + detalle)
+        sys.exit(1)
     total = time.perf_counter() - inicio
 
     _panel_resultado(result.output)
