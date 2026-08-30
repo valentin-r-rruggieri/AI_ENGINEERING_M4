@@ -17,7 +17,7 @@ python_puro/AEM4_python_exercises/
 └── AEM4L5_adaptacion_serving/  — Serving + profiling + async
 ```
 
-El proyecto integrador vive separado en `proyecto_integrador/python/PIM4_legalmove/` para que no se mezcle con los ejercicios de clase.
+El proyecto integrador vive separado en `proyecto_integrador/PIM4_legalmove/` para que no se mezcle con los ejercicios de clase.
 
 ---
 

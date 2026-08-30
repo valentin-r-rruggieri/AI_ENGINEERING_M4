@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aem4-inferencia
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aem4-inferencia
+  template:
+    metadata:
+      labels:
+        app: aem4-inferencia
+    spec:
+      containers:
+        - name: api
+          image: aem4-fastapi:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_ENV
+              value: produccion
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /salud
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /salud
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20

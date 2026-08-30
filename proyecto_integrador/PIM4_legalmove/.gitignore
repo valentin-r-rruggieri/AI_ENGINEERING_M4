@@ -1,0 +1,8 @@
+# Nunca versionar credenciales ni entornos virtuales.
+.env
+.venv/
+
+# Excluir cachés y resultados locales.
+__pycache__/
+*.py[cod]
+.pytest_cache/

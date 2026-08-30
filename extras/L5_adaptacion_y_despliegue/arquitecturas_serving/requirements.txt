@@ -1,0 +1,1 @@
+# Este recorrido utiliza únicamente la biblioteca estándar de Python.

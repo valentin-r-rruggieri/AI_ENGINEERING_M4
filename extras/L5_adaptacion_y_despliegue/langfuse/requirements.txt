@@ -1,0 +1,4 @@
+langfuse>=4
+langchain>=1
+langchain-openai
+pydantic-ai

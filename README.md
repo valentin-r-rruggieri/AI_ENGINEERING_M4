@@ -21,14 +21,22 @@ AI_ENGINEERING_M4/
 │       ├── AEM4L3_mcp/                                      # Scripts Python de MCP
 │       ├── AEM4L4_fundamentos_arquitectura/                 # Scripts Python de fundamentos
 │       └── AEM4L5_adaptacion_serving/                       # Scripts Python de serving
+├── extras/                                                  # Recorridos cortos por lecture
+│   ├── L1_vision_e_imagenes/                               # Pydantic, visión, OCR y DSPy
+│   ├── L2_audio_y_pipelines/                               # Whisper, audio y tokenización
+│   ├── L3_mcp_y_agentes/                                   # MCP, FastAPI y agentes
+│   ├── L4_transformers/                                    # PyTorch y Transformers
+│   ├── L5_adaptacion_y_despliegue/                         # LoRA, serving y despliegue
+│   ├── PI_legalmove/                                       # Acceso directo al proyecto oficial
+│   └── PI_comparativas_opcionales/                         # Comparativas no evaluables
 ├── proyecto_integrador/
-│   ├── notebooks/PIM4_Proyecto_Integrador_LegalMove/        # Notebooks del PIM
-│   └── python/PIM4_legalmove/                               # Scripts Python del PIM
+│   ├── PIM4_legalmove/                                     # Entrega oficial evaluable
+│   └── material_didactico/                                 # Notebooks y ejercicios guiados
 ├── guiones_clases_practicas/                                # Guiones privados, ignorados por Git
 └── README.md
 ```
 
-Las carpetas de `notebooks/` y `proyecto_integrador/notebooks/` contienen secuencias `.ipynb` compatibles con Google Colab. La mayoria de las lecciones tiene 8 notebooks; AEM4L1 tiene 10 y AEM4L4 tiene 12 por su progresion teorica expandida.
+Las carpetas de `notebooks/` y `proyecto_integrador/material_didactico/notebooks/` contienen secuencias `.ipynb` compatibles con Google Colab. L1 tiene 10 notebooks, L2 tiene 8, L3 tiene 20, L4 tiene 17 y L5 tiene 8. El proyecto integrador agrega otros 8 notebooks.
 
 | Ejercicio | Tipo | Descripción |
 |-----------|------|-------------|
@@ -41,7 +49,25 @@ Las carpetas de `notebooks/` y `proyecto_integrador/notebooks/` contienen secuen
 | E07 | Inicial | Warm-up mínimo |
 | E08 | Avanzado | Ejercicio cumbre del módulo |
 
-**Total: 54 notebooks** listos para Google Colab: 46 de clases AEM4L1-L5 y 8 del proyecto integrador.
+**Total: 71 notebooks** listos para Google Colab: 63 de clases AEM4L1-L5 y 8 del proyecto integrador.
+
+---
+
+## Extras prácticos por lecture
+
+`extras/` ofrece ejercicios `.py` pequeños para explicar cada componente de las clases sin
+ocultar la implementación detrás de helpers. Todos siguen el mismo formato: introducción,
+guía docente, comentarios por bloque, resultado visible y una modificación sugerida.
+
+- L1: OpenAI, Gemini, OCR, Pydantic y DSPy.
+- L2: OpenAI Whisper, Hugging Face, tokenización, ASR y WER.
+- L3: MCP v2, FastAPI, LangChain, LangGraph y PydanticAI.
+- L4: PyTorch, atención y Hugging Face Transformers.
+- L5: PEFT, LoRA, Langfuse, profiling, serving, Docker y Kubernetes.
+- PI: LegalMove con LangChain, LangGraph, PydanticAI y Langfuse.
+
+Cada tecnología instala únicamente su propio `requirements.txt`. Los ejemplos que consumen
+servicios externos comprueban sus credenciales antes de realizar llamadas.
 
 ---
 
@@ -176,6 +202,7 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 - `PIM4_{nombre}` — Proyecto integrador del módulo 4
 - `notebooks/` — notebooks didácticos por clase
 - `python_puro/AEM4_python_exercises/` — ejercicios `.py` ejecutables por clase
+- `extras/` — ejemplos lineales y comentados organizados por lecture y tecnología
 - `proyecto_integrador/` — notebooks y scripts del PIM separados del material regular
 - `guiones_clases_practicas/` — guiones docentes privados, ignorados por Git
 - `E{NN}_{tipo}_{descripcion}.ipynb` — Notebooks con número secuencial
@@ -187,7 +214,8 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 - Google Colab (recomendado) o Jupyter Notebook
 - Python 3.10+
 - Las notebooks son material didáctico autocontenido.
-- Los scripts de `python_puro/` y `proyecto_integrador/python/` usan API real de OpenAI cuando llaman modelos.
+- Los scripts de `python_puro/` y `proyecto_integrador/PIM4_legalmove/` usan API real de OpenAI cuando llaman modelos.
+- Cada tecnología de `extras/` tiene dependencias e instrucciones de ejecución.
 - Para los scripts con LLM o Whisper, configurar `OPENAI_API_KEY` en `python_puro/AEM4_python_exercises/.env`.
 
 ---
@@ -197,3 +225,4 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 1. Abre cualquier notebook `.ipynb` en [Google Colab](https://colab.research.google.com/)
 2. Sigue la progresión E01 → E08 dentro de cada lección
 3. Los ejercicios E05-E06 son para resolver; E07 es warm-up; E08 es el desafío avanzado
+4. Para las prácticas, abre `extras/README.md`, elige la lecture y ejecuta los `.py` en orden numérico

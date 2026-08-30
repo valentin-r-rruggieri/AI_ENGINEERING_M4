@@ -1,0 +1,3 @@
+openai
+jiwer
+python-dotenv

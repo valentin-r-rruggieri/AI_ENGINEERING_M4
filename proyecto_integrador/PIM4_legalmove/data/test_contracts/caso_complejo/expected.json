@@ -1,0 +1,13 @@
+{
+  "sections_changed": [
+    "Cláusula 3 - Alcance territorial",
+    "Cláusula 4 - Restricción de uso",
+    "Cláusula 6 - Seguridad de la información"
+  ],
+  "topics_touched": [
+    "alcance territorial",
+    "uso de información confidencial",
+    "seguridad de la información"
+  ],
+  "summary_of_the_change": "MODIFICACIÓN: el alcance territorial se amplía de Argentina a Argentina, Chile y Uruguay. ELIMINACIÓN: se suprime la restricción de uso limitada a evaluar una alianza comercial. ADICIÓN: se incorpora la notificación de incidentes de seguridad dentro de 48 horas."
+}

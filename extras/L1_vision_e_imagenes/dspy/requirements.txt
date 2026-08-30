@@ -1,0 +1,2 @@
+dspy
+pydantic>=2

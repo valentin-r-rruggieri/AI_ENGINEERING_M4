@@ -1,0 +1,8 @@
+openai
+pydantic>=2
+langchain>=1
+langchain-openai
+langchain-mcp-adapters
+langgraph
+pydantic-ai[mcp]
+langfuse>=4
