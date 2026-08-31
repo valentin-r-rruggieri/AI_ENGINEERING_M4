@@ -10,16 +10,18 @@ openai
 pydantic>=2
 python-dotenv
 
-torch
-transformers
-datasets
-accelerate
+# Combinación validada para Hugging Face y LoRA en Windows con PyTorch CPU.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
+transformers==4.46.3
+datasets==3.2.0
+accelerate==1.0.1
 jiwer
 librosa
 soundfile
 diffusers
 evaluate
-peft
+peft==0.13.2
 
 fastapi
 uvicorn[standard]

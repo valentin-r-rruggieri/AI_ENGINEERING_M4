@@ -29,8 +29,9 @@ def tokenizar(state: EstadoTransformer) -> dict:
 # Explica la métrica obtenida sin reemplazar el cálculo Transformer.
 def explicar(state: EstadoTransformer) -> dict:
     extractor = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(Explicacion)
-    pedido = f"Explica por qué esta frase tiene {len(state['tokens'])} tokens: {state['texto']}"
-    return {"explicacion": extractor.invoke(pedido).model_dump()}
+    pedido = f"Explica por qué esta frase tiene {len(state.get('tokens', []))} tokens: {state['texto']}"
+    explicacion = Explicacion.model_validate(extractor.invoke(pedido))
+    return {"explicacion": explicacion.model_dump()}
 
 # Une cálculo y explicación como dos nodos visibles.
 grafo = StateGraph(EstadoTransformer)

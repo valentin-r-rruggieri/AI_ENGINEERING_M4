@@ -41,7 +41,8 @@ def analizar_formulario(state: EstadoVision) -> ActualizacionVision:
         {"type": "text", "text": "Identifica al titular y recomendá aceptar o revisar el formulario."},
         {"type": "image", "base64": state["imagen_base64"], "mime_type": "image/png"},
     ])
-    return {"decision": extractor.invoke([mensaje]).model_dump()}
+    decision = DecisionVisual.model_validate(extractor.invoke([mensaje]))
+    return {"decision": decision.model_dump()}
 
 # Conecta inicio, nodo visual y final en un flujo explícito.
 grafo = StateGraph(EstadoVision)

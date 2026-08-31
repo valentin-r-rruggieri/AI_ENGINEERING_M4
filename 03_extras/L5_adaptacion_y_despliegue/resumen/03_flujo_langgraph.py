@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 # Define la recomendación tipada que termina el flujo.
 class RecomendacionServing(BaseModel):
-    destino: NotRequired[str]
+    destino: str
     motivo: str
 
 # Define el estado de la consulta de serving.
@@ -32,8 +32,9 @@ def responder(state: EstadoServing) -> dict:
 # Elige una arquitectura a partir de la latencia medida.
 def recomendar(state: EstadoServing) -> dict:
     extractor = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(RecomendacionServing)
-    pedido = f"Latencia observada: {state['latencia_ms']} ms. Elegí Docker o Kubernetes y justificá en una oración."
-    return {"recomendacion": extractor.invoke(pedido).model_dump()}
+    pedido = f"Latencia observada: {state.get('latencia_ms', 0.0)} ms. Elegí Docker o Kubernetes y justificá en una oración."
+    recomendacion = RecomendacionServing.model_validate(extractor.invoke(pedido))
+    return {"recomendacion": recomendacion.model_dump()}
 
 # Conecta respuesta, medición y recomendación.
 grafo = StateGraph(EstadoServing)

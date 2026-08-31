@@ -30,8 +30,9 @@ def consultar_tool(state: EstadoMCP) -> dict:
 # Redacta la respuesta usando el dato que entregó la tool.
 def responder_agente(state: EstadoMCP) -> dict:
     extractor = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(RespuestaAgente)
-    pedido = f"Contrato {state['codigo']} con estado {state['estado_contrato']}. Respondé de forma breve."
-    return {"respuesta": extractor.invoke(pedido).model_dump()}
+    pedido = f"Contrato {state['codigo']} con estado {state.get('estado_contrato', 'sin dato')}. Respondé de forma breve."
+    respuesta = RespuestaAgente.model_validate(extractor.invoke(pedido))
+    return {"respuesta": respuesta.model_dump()}
 
 # Ordena los nodos: tool primero, agente después.
 grafo = StateGraph(EstadoMCP)

@@ -1,4 +1,7 @@
 {
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
   "extraPaths": [
     "02_python_puro/AEM4_python_exercises"
   ]

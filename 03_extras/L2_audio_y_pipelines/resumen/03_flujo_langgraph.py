@@ -26,7 +26,8 @@ class EstadoAudio(TypedDict):
 def revisar_audio(state: EstadoAudio) -> dict:
     extractor = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(DecisionAudio)
     pedido = f"Transcripción: {state['transcripcion']}. WER: {state['wer']}. Resume y decidí si requiere revisión."
-    return {"decision": extractor.invoke(pedido).model_dump()}
+    decision = DecisionAudio.model_validate(extractor.invoke(pedido))
+    return {"decision": decision.model_dump()}
 
 # Construye el grafo con un único nodo de decisión explícito.
 grafo = StateGraph(EstadoAudio)
