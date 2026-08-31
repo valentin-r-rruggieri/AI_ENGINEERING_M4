@@ -1,0 +1,34 @@
+# Dependencias unificadas para todos los recorridos de 03_extras/.
+# No incluye el proyecto integrador, que conserva sus versiones exactas por separado.
+
+dspy
+google-genai
+pillow
+opencv-python
+pytesseract
+openai
+pydantic>=2
+python-dotenv
+
+torch
+transformers
+datasets
+accelerate
+jiwer
+librosa
+soundfile
+diffusers
+evaluate
+peft
+
+fastapi
+uvicorn[standard]
+mcp[cli]>=2
+langchain>=1
+langchain-openai
+langchain-google-genai
+langchain-mcp-adapters
+langgraph
+pydantic-ai
+langfuse>=4
+pyyaml

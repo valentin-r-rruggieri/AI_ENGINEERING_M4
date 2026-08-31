@@ -1,0 +1,4 @@
+openai
+jiwer
+python-dotenv
+langchain-openai

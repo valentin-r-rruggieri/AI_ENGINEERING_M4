@@ -4,24 +4,51 @@ Módulo 4 del programa **AI Engineering** enfocado en pipelines multimodales (vi
 
 ---
 
+## Instalar todos los extras
+
+Desde la raíz del repositorio, activá el entorno virtual y ejecutá una sola vez:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Esto instala las dependencias de todos los recorridos de `03_extras/`. El proyecto
+integrador mantiene su instalación independiente en `04_proyecto_integrador/PIM4_legalmove/`.
+
+## Configurar claves una sola vez
+
+Copiá el archivo global de ejemplo y completá solamente las variables de los
+servicios que vayas a utilizar:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+`OPENAI_API_KEY` habilita los ejercicios de OpenAI, Whisper, LangChain y DSPy.
+`GEMINI_API_KEY` se necesita solo para los ejemplos Gemini. Las claves de Langfuse
+habilitan las trazas de L5 y LegalMove. El archivo `.env` está ignorado por Git.
+
+---
+
 ## Estructura del repositorio
 
 ```
 AI_ENGINEERING_M4/
-├── notebooks/
+├── .vscode/                                             # Configuración de VS Code
+├── 01_notebooks/
 │   ├── AEM4L1_IA_que_ve_y_crea_vision_e_imagenes/          # Notebooks de visión
 │   ├── AEM4L2_Introduccion_a_audio_pipelines/               # Notebooks de audio
 │   ├── AEM4L3_Introduccion_a_los_MCP/                       # Notebooks de MCP
 │   ├── AEM4L4_Fundamentos_teoricos_y_arquitectura/          # Notebooks de transformers
 │   └── AEM4L5_Arquitecturas_avanzadas_de_adaptacion/        # Notebooks de adaptación/serving
-├── python_puro/
+├── 02_python_puro/
 │   └── AEM4_python_exercises/
 │       ├── AEM4L1_vision_imagenes/                          # Scripts Python de visión
 │       ├── AEM4L2_audio_pipelines/                          # Scripts Python de audio
 │       ├── AEM4L3_mcp/                                      # Scripts Python de MCP
 │       ├── AEM4L4_fundamentos_arquitectura/                 # Scripts Python de fundamentos
 │       └── AEM4L5_adaptacion_serving/                       # Scripts Python de serving
-├── extras/                                                  # Recorridos cortos por lecture
+├── 03_extras/                                                  # Recorridos cortos por lecture
 │   ├── L1_vision_e_imagenes/                               # Pydantic, visión, OCR y DSPy
 │   ├── L2_audio_y_pipelines/                               # Whisper, audio y tokenización
 │   ├── L3_mcp_y_agentes/                                   # MCP, FastAPI y agentes
@@ -29,14 +56,17 @@ AI_ENGINEERING_M4/
 │   ├── L5_adaptacion_y_despliegue/                         # LoRA, serving y despliegue
 │   ├── PI_legalmove/                                       # Acceso directo al proyecto oficial
 │   └── PI_comparativas_opcionales/                         # Comparativas no evaluables
-├── proyecto_integrador/
+├── 04_proyecto_integrador/
 │   ├── PIM4_legalmove/                                     # Entrega oficial evaluable
 │   └── material_didactico/                                 # Notebooks y ejercicios guiados
-├── guiones_clases_practicas/                                # Guiones privados, ignorados por Git
+├── 05_docs/
+│   ├── rubrica/                                           # Criterios y evidencias de evaluación
+│   ├── guias_docentes/                                    # Material para preparar las clases
+│   └── recursos/                                          # Enlaces y recursos transversales
 └── README.md
 ```
 
-Las carpetas de `notebooks/` y `proyecto_integrador/material_didactico/notebooks/` contienen secuencias `.ipynb` compatibles con Google Colab. L1 tiene 10 notebooks, L2 tiene 8, L3 tiene 20, L4 tiene 17 y L5 tiene 8. El proyecto integrador agrega otros 8 notebooks.
+Las carpetas de `01_notebooks/` y `04_proyecto_integrador/material_didactico/notebooks/` contienen secuencias `.ipynb` compatibles con Google Colab. L1 tiene 10 notebooks, L2 tiene 8, L3 tiene 20, L4 tiene 17 y L5 tiene 8. El proyecto integrador agrega otros 8 notebooks.
 
 | Ejercicio | Tipo | Descripción |
 |-----------|------|-------------|
@@ -55,7 +85,7 @@ Las carpetas de `notebooks/` y `proyecto_integrador/material_didactico/notebooks
 
 ## Extras prácticos por lecture
 
-`extras/` ofrece ejercicios `.py` pequeños para explicar cada componente de las clases sin
+`03_extras/` ofrece ejercicios `.py` pequeños para explicar cada componente de las clases sin
 ocultar la implementación detrás de helpers. Todos siguen el mismo formato: introducción,
 guía docente, comentarios por bloque, resultado visible y una modificación sugerida.
 
@@ -200,10 +230,10 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 
 - `AEM4L{X}_{nombre}` — Lección X del módulo 4
 - `PIM4_{nombre}` — Proyecto integrador del módulo 4
-- `notebooks/` — notebooks didácticos por clase
-- `python_puro/AEM4_python_exercises/` — ejercicios `.py` ejecutables por clase
-- `extras/` — ejemplos lineales y comentados organizados por lecture y tecnología
-- `proyecto_integrador/` — notebooks y scripts del PIM separados del material regular
+- `01_notebooks/` — notebooks didácticos por clase
+- `02_python_puro/AEM4_python_exercises/` — ejercicios `.py` ejecutables por clase
+- `03_extras/` — ejemplos lineales y comentados organizados por lecture y tecnología
+- `04_proyecto_integrador/` — notebooks y scripts del PIM separados del material regular
 - `guiones_clases_practicas/` — guiones docentes privados, ignorados por Git
 - `E{NN}_{tipo}_{descripcion}.ipynb` — Notebooks con número secuencial
 
@@ -214,9 +244,9 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 - Google Colab (recomendado) o Jupyter Notebook
 - Python 3.10+
 - Las notebooks son material didáctico autocontenido.
-- Los scripts de `python_puro/` y `proyecto_integrador/PIM4_legalmove/` usan API real de OpenAI cuando llaman modelos.
-- Cada tecnología de `extras/` tiene dependencias e instrucciones de ejecución.
-- Para los scripts con LLM o Whisper, configurar `OPENAI_API_KEY` en `python_puro/AEM4_python_exercises/.env`.
+- Los scripts de `02_python_puro/` y `04_proyecto_integrador/PIM4_legalmove/` usan API real de OpenAI cuando llaman modelos.
+- Cada tecnología de `03_extras/` tiene dependencias e instrucciones de ejecución.
+- Para los scripts con LLM o Whisper, configurar `OPENAI_API_KEY` en `02_python_puro/AEM4_python_exercises/.env`.
 
 ---
 
@@ -225,4 +255,4 @@ Pipeline completo de análisis de documentos legales: compara contratos con sus 
 1. Abre cualquier notebook `.ipynb` en [Google Colab](https://colab.research.google.com/)
 2. Sigue la progresión E01 → E08 dentro de cada lección
 3. Los ejercicios E05-E06 son para resolver; E07 es warm-up; E08 es el desafío avanzado
-4. Para las prácticas, abre `extras/README.md`, elige la lecture y ejecuta los `.py` en orden numérico
+4. Para las prácticas, abre `03_extras/README.md`, elige la lecture y ejecuta los `.py` en orden numérico

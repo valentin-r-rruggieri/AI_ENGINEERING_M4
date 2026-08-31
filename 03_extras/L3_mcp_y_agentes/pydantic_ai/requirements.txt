@@ -1,0 +1,3 @@
+pydantic-ai
+pydantic>=2
+openai
