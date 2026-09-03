@@ -82,4 +82,46 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este es el ejemplo más pequeño de *routing*: una métrica numérica decide a qué destino lógico debería ir un audio. El grafo tiene un nodo porque la enseñanza está en ver la regla explícita, no en usar muchos componentes.
+
+```mermaid
+flowchart TD
+    A[Estado: WER] --> B[decidir_calidad]
+    B --> C{WER > 0.15}
+    C -->|Sí| D[destino: repetir_audio]
+    C -->|No| E[destino: procesar_transcripcion]
+```
+
+### 1. Estado de entrada y campo que aparecerá después
+
+```python
+class EstadoAudio(TypedDict):
+    wer: float
+    destino: NotRequired[str]
+```
+
+Al invocar, solo existe `wer`. Después del nodo se incorpora `destino`. `NotRequired` documenta que no se debe exigir una clave que todavía no fue calculada.
+
+### 2. Regla visible y testeable
+
+```python
+return {"destino": "repetir_audio" if state["wer"] > 0.15 else "procesar_transcripcion"}
+```
+
+La condición es determinista: para el mismo WER siempre produce el mismo destino. A diferencia de delegar este routing a un LLM, se puede probar fácilmente con valores `0`, `0.15` y `0.151`.
+
+| WER | Resultado del código | Interpretación |
+|---:|---|---|
+| `0.00` | `procesar_transcripcion` | Coincidencia exacta con referencia. |
+| `0.15` | `procesar_transcripcion` | El operador es `>`, no `>=`. |
+| `0.21` | `repetir_audio` | El caso inicial se deriva a una acción segura. |
+
+### 3. Grafo lineal
+
+`START → decidir_calidad → END` registra que el estado pasa por una única decisión. En un flujo mayor, esos destinos se conectarían a nodos distintos: pedir otra grabación, mostrar revisión humana o enviar el texto a LangChain.
+
+## Qué aprender antes de ampliar
+
+El valor `0.15` es una política, no una propiedad de LangGraph. Un umbral debe definirse a partir de golden cases y costo de error. Además, un WER bajo con una dosis equivocada puede requerir revisión: el routing real combinaría WER con entidades críticas, como muestra el caso 08.

@@ -15,10 +15,11 @@ flowchart LR
 
 ## Archivo de este tema
 
-<table>
-<tr><th>Archivo</th><th>Entrada</th><th>Salida</th><th>Aprendizaje</th></tr>
-<tr><td>00 resumir transcripción punto py</td><td>Texto ASR simulado.</td><td>Una oración resumen.</td><td>Separar ASR de postproceso.</td></tr>
-</table>
+| Archivo | Entrada | Salida | Aprendizaje |
+|---|---|---|---|
+| [00_resumir_transcripcion.py](00_resumir_transcripcion.py) | Texto ASR simulado. | Una oración resumen. | Separar ASR de postproceso. |
+
+La guía de código y teoría está en [00_resumir_transcripcion.md](00_resumir_transcripcion.md).
 
 ## Código central
 
@@ -34,15 +35,13 @@ El operador vertical crea una cadena: el prompt produce el mensaje y el modelo p
 
 ## Tabla de responsabilidades
 
-<table>
-<tr><th>Componente</th><th>No debe hacer</th><th>Sí debe hacer</th></tr>
-<tr><td>ASR</td><td>Inventar intención.</td><td>Producir texto fiel.</td></tr>
-<tr><td>Prompt</td><td>Ocultar reglas.</td><td>Delimitar tarea y límites.</td></tr>
-<tr><td>LLM</td><td>Corregir mágicamente audio.</td><td>Interpretar texto disponible.</td></tr>
-<tr><td>Pydantic</td><td>Validar verdad factual.</td><td>Validar forma de salida.</td></tr>
-</table>
+| Componente | No debe hacer | Sí debe hacer |
+|---|---|---|
+| ASR | Inventar intención. | Producir texto fiel. |
+| Prompt | Ocultar reglas. | Delimitar tarea y límites. |
+| LLM | Corregir mágicamente audio. | Interpretar texto disponible. |
+| Pydantic | Validar verdad factual. | Validar forma de salida. |
 
 ## Práctica
 
 Cambiá la transcripción por una frase ambigua. Luego agregá al prompt: “no inventes datos”. Compará el resumen y discutí qué error proviene de ASR y cuál del LLM.
-

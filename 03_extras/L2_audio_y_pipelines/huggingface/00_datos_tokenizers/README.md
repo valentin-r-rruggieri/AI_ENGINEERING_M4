@@ -16,11 +16,12 @@ flowchart LR
 
 ## Archivos de este tema
 
-<table>
-<tr><th>Archivo</th><th>Concepto</th><th>Salida visible</th></tr>
-<tr><td>00 dataset local punto py</td><td>Dataset desde CSV.</td><td>Filas, columnas y primer caso.</td></tr>
-<tr><td>01 bpe wordpiece punto py</td><td>Subwords.</td><td>Dos segmentaciones del mismo texto.</td></tr>
-</table>
+| Archivo | Concepto | Salida visible |
+|---|---|---|
+| [00_dataset_local.py](00_dataset_local.py) | Dataset desde CSV. | Filas, columnas y primer caso. |
+| [01_bpe_wordpiece.py](01_bpe_wordpiece.py) | Subwords. | Dos segmentaciones del mismo texto. |
+
+Guías: [dataset local](00_dataset_local.md) y [BPE / WordPiece](01_bpe_wordpiece.md).
 
 ## Dataset
 
@@ -34,11 +35,10 @@ Un Dataset preserva schema y permite operaciones reproducibles como map, filter,
 
 ## BPE y WordPiece
 
-<table>
-<tr><th>Esquema</th><th>Idea</th><th>Ventaja</th></tr>
-<tr><td>BPE</td><td>Fusiona pares frecuentes.</td><td>Construye subpalabras frecuentes.</td></tr>
-<tr><td>WordPiece</td><td>Selecciona unidades estadísticamente útiles.</td><td>Representa continuaciones con ##.</td></tr>
-</table>
+| Esquema | Idea | Ventaja |
+|---|---|---|
+| BPE | Fusiona pares frecuentes. | Construye subpalabras frecuentes. |
+| WordPiece | Selecciona unidades estadísticamente útiles. | Representa continuaciones con `##`. |
 
 ~~~python
 tokens_bpe = tokenizer_bpe.tokenize("hiperpersonalización contractual")
@@ -57,4 +57,3 @@ flowchart TD
 ## Práctica
 
 Usá un apellido raro y después una palabra de dominio. Contá tokens en BPE y WordPiece. Explicá cuál podría manejar mejor una palabra no vista.
-

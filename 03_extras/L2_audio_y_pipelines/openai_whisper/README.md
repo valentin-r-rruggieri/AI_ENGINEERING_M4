@@ -18,3 +18,12 @@ el recurso preparado sin realizar una llamada con costo.
 | Integrador | [02 en marcha](02_en_marcha/README.md) | pipeline audio punto py |
 
 Cada guía incluye teoría, fórmula, gráfico Mermaid, tabla, código explicado y práctica.
+# OpenAI Whisper
+
+Ejemplos progresivos de ASR, evaluación y posprocesamiento. Cada script tiene una guía de teoría y lectura de código junto a él.
+
+| Tema | Script | Guía |
+|---|---|---|
+| Transcripción | [00_transcribir_whisper.py](00_transcripcion/00_transcribir_whisper.py) | [Explicación](00_transcripcion/00_transcribir_whisper.md) |
+| Métrica WER | [00_calcular_wer.py](01_evaluacion/00_calcular_wer.py) | [Explicación](01_evaluacion/00_calcular_wer.md) |
+| Pipeline completo | [pipeline_audio.py](02_en_marcha/pipeline_audio.py) | [Explicación](02_en_marcha/pipeline_audio.md) |

@@ -82,4 +82,52 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este caso concentra LangChain y Pydantic en una clasificación operativa. No es un clasificador médico: usa una transcripción de ejemplo para decidir la prioridad de atención sin emitir diagnóstico.
+
+```mermaid
+flowchart LR
+    A[Transcripción] --> B[Instrucción con límite]
+    B --> C[ChatOpenAI structured output]
+    C --> D[PrioridadAudio]
+    D --> E[prioridad + motivo + respuesta]
+```
+
+### 1. El schema define qué significa “clasificar”
+
+```python
+class PrioridadAudio(BaseModel):
+    prioridad: str
+    motivo: str
+    respuesta_operativa: str
+```
+
+Sin schema, el modelo podría devolver un párrafo, una lista o texto irrelevante. Aquí debe expresar prioridad, explicación y una acción. A propósito los campos son simples: el ejercicio busca hacer visible el contrato antes de introducir `Literal` o validadores complejos.
+
+### 2. La instrucción delimita el alcance
+
+```python
+"Clasificá ... como baja, media o alta prioridad. No des diagnóstico médico: "
+```
+
+La prohibición es tan importante como la tarea. El LLM procesa lenguaje y puede redactar contenido convincente; el prompt restringe una salida operacional y evita que se presente como profesional de salud.
+
+### 3. Structured output transforma texto en datos
+
+```python
+extractor = ChatOpenAI(...).with_structured_output(PrioridadAudio)
+resultado = extractor.invoke(...)
+```
+
+LangChain prepara el pedido y Pydantic verifica que se puedan construir los tres campos. `model_dump()` permite imprimir un diccionario para inspección o envío a otro sistema.
+
+| Campo | Decisión que representa | Evidencia que debería acompañarlo |
+|---|---|---|
+| `prioridad` | Orden de atención | Texto fuente y regla de clasificación. |
+| `motivo` | Por qué se eligió esa prioridad | Fragmento de transcripción. |
+| `respuesta_operativa` | Próximo paso | Política del proceso, no diagnóstico. |
+
+## Pregunta crítica
+
+La clasificación no puede reparar un ASR equivocado. Antes de invocar este archivo, un pipeline serio debería conocer WER, verificar palabras críticas y guardar el audio. El caso muestra posproceso; no reemplaza las etapas de calidad.

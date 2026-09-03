@@ -144,4 +144,85 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este pipeline cambia el dominio: no busca una indicación médica sino transformar una reunión en una minuta accionable. El principio sigue siendo el mismo: primero se conserva texto fuente, después se estructura, y finalmente se marca si falta contexto.
+
+```mermaid
+flowchart LR
+    A[reunion_equipo.wav] --> B[Whisper ASR]
+    B --> C[Transcripción literal]
+    C --> D[LangChain structured output]
+    D --> E[MinutaReunion Pydantic]
+    E --> F[Resumen, decisiones, tareas, revisión]
+```
+
+### 1. La minuta es un contrato, no un texto libre
+
+```python
+class MinutaReunion(BaseModel):
+    resumen: str = Field(min_length=20)
+    decisiones: list[str] = Field(min_length=1)
+    tareas: list[str] = Field(min_length=1)
+    requiere_revision: bool
+    motivo_revision: str
+```
+
+La validación obliga a producir un resumen con contenido mínimo y al menos una decisión y una tarea. `requiere_revision` evita que una minuta parezca definitiva cuando la transcripción tiene ambigüedades. `motivo_revision` explica cuál es el límite observado.
+
+| Campo | Necesidad de negocio | Riesgo que reduce |
+|---|---|---|
+| `resumen` | Comprender la reunión rápidamente | Leer toda la transcripción para ubicar contexto. |
+| `decisiones` | Saber qué se acordó | Confundir comentario con decisión. |
+| `tareas` | Conservar próximos pasos | Dejar acciones implícitas. |
+| `requiere_revision` | Señalar incertidumbre | Presentar certeza falsa. |
+| `motivo_revision` | Explicar el bloqueo | Que la persona deba adivinar por qué revisar. |
+
+### 2. Abrir y transcribir la fuente de evidencia
+
+```python
+with ruta_audio.open("rb") as archivo_audio:
+    respuesta_asr = cliente_audio.audio.transcriptions.create(
+        model="whisper-1", file=archivo_audio, language="es"
+    )
+transcripcion = str(respuesta_asr.text)
+```
+
+El bloque `with` garantiza cierre del archivo. `str(...)` deja una cadena explícita para el siguiente componente. La transcripción se imprime junto a la minuta al final: esa decisión permite auditar si el resumen respetó el contenido.
+
+### 3. Pedir extracción con límites
+
+El prompt contiene tres límites: “usá solo la transcripción”, “no inventes responsables ni fechas” y “marcá revisión si falta contexto”. Son reglas importantes porque reuniones reales suelen tener pronombres, decisiones incompletas y fechas mencionadas de forma ambigua.
+
+### 4. Validar antes de devolver
+
+```python
+minuta = extractor.invoke(...)
+MinutaReunion.model_validate(minuta).model_dump()
+```
+
+La llamada structured output ya busca el schema; `model_validate` deja claro para el estudiante que la aplicación no acepta una respuesta sin pasar por Pydantic. `model_dump` produce datos serializables.
+
+```mermaid
+sequenceDiagram
+    participant R as Reunión WAV
+    participant W as Whisper
+    participant L as LangChain
+    participant P as Pydantic
+    participant T as Equipo
+    R->>W: audio
+    W-->>L: transcripción
+    L-->>P: minuta propuesta
+    P-->>T: minuta válida + texto fuente
+```
+
+## Comprobaciones para clase
+
+| Pregunta | Evidencia a mirar |
+|---|---|
+| ¿La minuta inventó una fecha? | Comparar con `transcripcion`. |
+| ¿Hay al menos una tarea explícita? | Campo `tareas`. |
+| ¿La salida es segura si faltó una frase? | `requiere_revision` y audio fuente. |
+| ¿El audio rápido cambia el resultado? | Ejecutar con `reunion_equipo_rapido.wav`. |
+
+El ejercicio muestra un patrón reutilizable: ASR genera fuente, LLM estructura, Pydantic controla forma y la persona conserva la última decisión.

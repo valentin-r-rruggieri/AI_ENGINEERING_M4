@@ -87,4 +87,67 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este caso introduce LangGraph sin esconder el flujo: tiene un estado inicial, un único nodo y un estado final. Antes de usar grafos complejos conviene entender que un nodo recibe estado y devuelve solamente los campos que actualiza.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Entrada
+    Entrada --> revisar_audio
+    revisar_audio --> DecisionAudio
+    DecisionAudio --> [*]
+```
+
+### 1. Separar salida final de estado interno
+
+```python
+class DecisionAudio(BaseModel):
+    resumen: str
+    requiere_revision: bool
+
+class EstadoAudio(TypedDict):
+    transcripcion: str
+    wer: float
+    decision: NotRequired[dict[str, object]]
+```
+
+`DecisionAudio` es el contrato de negocio que entrega el LLM. `EstadoAudio` es el sobre que viaja por el grafo: contiene los inputs y el campo `decision` que todavía no existe al inicio. `NotRequired` expresa justamente esa evolución.
+
+### 2. El nodo recibe `state`, no variables globales ocultas
+
+```python
+def revisar_audio(state: EstadoAudio) -> dict:
+    pedido = f"Transcripción: {state['transcripcion']}. WER: {state['wer']}..."
+```
+
+El nodo lee la transcripción y WER desde el estado. Esto hace que el handoff sea visible: otra persona puede inspeccionar qué evidencia recibió la decisión. El nombre `state` también cumple con la firma que esperan los tipos de LangGraph.
+
+### 3. El LLM devuelve estructura y el nodo devuelve actualización
+
+```python
+decision = DecisionAudio.model_validate(extractor.invoke(pedido))
+return {"decision": decision.model_dump()}
+```
+
+`with_structured_output(DecisionAudio)` pide un objeto compatible. La validación adicional deja explícito el contrato. El retorno no repite todo el estado: solo agrega `decision`; LangGraph combina esa actualización con los datos que ya tenía.
+
+### 4. Conectar el grafo
+
+```python
+grafo.add_edge(START, "revisar_audio")
+grafo.add_edge("revisar_audio", END)
+```
+
+`START` y `END` hacen evidente que no hay rutas alternativas todavía. El objetivo no es complejidad: es enseñar cómo se representa un paso auditable que podría crecer después con ASR, WER y routing.
+
+| Concepto | En el script | Pregunta docente |
+|---|---|---|
+| Estado | `EstadoAudio` | ¿Qué datos cruzan el handoff? |
+| Nodo | `revisar_audio` | ¿Qué transforma y qué conserva? |
+| Contrato | `DecisionAudio` | ¿Qué forma debe tener la respuesta? |
+| Ejecución | `compile().invoke(entrada)` | ¿Cuál es el input inicial y qué salida se imprime? |
+
+## Límite del ejemplo
+
+El nodo confía en el WER que recibe. No calcula ASR ni métrica; eso es deliberado. El caso 11 muestra un grafo donde cada etapa aparece como un nodo distinto antes de tomar la decisión.

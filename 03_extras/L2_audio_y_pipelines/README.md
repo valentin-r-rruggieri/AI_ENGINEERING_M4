@@ -37,3 +37,27 @@ gráficos Mermaid, tablas, fórmulas, código explicado y ejercicios:
 - `openai_whisper`: transcripción remota, WER y pipeline completo.
 - `huggingface`: Dataset, BPE, WordPiece, ASR local, JiWER y difusión.
 - `langchain`: postproceso de transcripciones y responsabilidades del pipeline.
+# L2 — Audio y pipelines
+
+Esta carpeta se recorre de señal a decisión: primero se obtiene texto desde audio, luego se mide su calidad y finalmente se usa un LLM solamente sobre el texto que ya fue revisado.
+
+```mermaid
+flowchart LR
+    A[Audio] --> B[Preprocesamiento opcional]
+    B --> C[ASR]
+    C --> D[Transcripción]
+    D --> E[WER y términos críticos]
+    E --> F[LangChain]
+    F --> G[Resumen o salida estructurada]
+```
+
+| Tecnología | Propósito | Material de apoyo |
+|---|---|---|
+| [OpenAI Whisper](openai_whisper/README.md) | ASR por API, WER e integrador | Guía junto a cada `.py`. |
+| [Hugging Face](huggingface/README.md) | Dataset, tokens, ASR local y difusión | Guía junto a cada `.py`. |
+| [LangChain](langchain/README.md) | Posprocesar el texto transcripto | Guía junto al `.py`. |
+| [Resumen](resumen/README.md) | Casos integradores de la lecture | Repaso y agentes. |
+
+## Regla de calidad
+
+Una respuesta bien redactada no corrige una transcripción defectuosa. Antes de resumir, clasificar o tomar una decisión se valida WER y, en dominios sensibles, se revisan números, nombres y términos críticos.

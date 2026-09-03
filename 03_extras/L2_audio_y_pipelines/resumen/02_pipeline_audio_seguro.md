@@ -90,4 +90,68 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este archivo es el primer integrador: junta una métrica de calidad, una cuenta simple de tokens, un contrato Pydantic, una regla de negocio y una explicación LangChain. Está construido para mostrar que un pipeline no es una sola llamada al modelo.
+
+```mermaid
+flowchart TD
+    A[Referencia] --> C[WER]
+    B[Transcripción] --> C
+    B --> D[split: tokens estimados]
+    C --> E[Regla de revisión]
+    D --> F[Pydantic PipelineAudio]
+    E --> F
+    F --> G[LangChain explica]
+    G --> H[Reporte final]
+```
+
+### 1. Medir dos propiedades distintas
+
+```python
+tokens_estimados = len(transcripcion.split())
+error_wer = wer(referencia, transcripcion)
+```
+
+`tokens_estimados` no es la tokenización real de un Transformer: cuenta palabras como aproximación docente. Sirve para hablar de tamaño de input. WER, en cambio, compara contenido con la referencia. No deben confundirse: una transcripción corta puede ser mala y una larga puede ser correcta.
+
+### 2. Expresar reglas como un modelo tipado
+
+```python
+class PipelineAudio(BaseModel):
+    tokens_estimados: int = Field(ge=1)
+    wer: float = Field(ge=0)
+    resumen: str
+    requiere_revision: bool
+```
+
+El modelo impide que la cantidad de tokens sea cero o que WER sea negativo. No fija un límite superior porque WER puede ser superior a 1 cuando existen muchas inserciones.
+
+### 3. Exponer la regla de riesgo
+
+```python
+requiere_revision=error_wer > 0.1
+```
+
+El umbral `0.1` fue elegido para discusión, no como norma médica universal. La fortaleza del código es que la regla está visible, es modificable y puede auditarse.
+
+| Dato | Cómo se obtiene | Qué responde | No responde |
+|---|---|---|---|
+| Tokens estimados | Palabras separadas | Tamaño aproximado | Cómo tokeniza el modelo real. |
+| WER | Referencia vs hipótesis | Error global | Severidad de cada palabra. |
+| `requiere_revision` | Umbral explícito | Destino operativo | Verdad clínica. |
+| Resumen | Texto diseñado | Lectura breve | Fidelidad por sí solo. |
+
+### 4. Agregar explicación sin alterar el contrato
+
+La llamada LangChain recibe `resultado.wer`, ya validado por Pydantic. Por eso la explicación queda fuera del modelo `PipelineAudio`: es información auxiliar y no debe reemplazar los campos controlados.
+
+## Secuencia para enseñar
+
+1. Cambiá `ocho` por `dos` en `transcripcion`.
+2. Predecí el WER antes de ejecutar.
+3. Observá que la regla puede marcar revisión.
+4. Preguntá si el umbral detecta todo lo importante.
+5. Proponé una lista adicional de términos críticos.
+
+La conclusión es que automatizar responsablemente significa conservar evidencia técnica, formalizar reglas y dejar claro cuándo el flujo debe detenerse.

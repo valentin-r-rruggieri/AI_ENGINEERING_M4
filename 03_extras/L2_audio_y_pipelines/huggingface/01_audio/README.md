@@ -15,11 +15,12 @@ flowchart LR
 
 ## Archivos de este tema
 
-<table>
-<tr><th>Archivo</th><th>Entrada</th><th>Salida</th></tr>
-<tr><td>00 asr local punto py</td><td>Audio WAV.</td><td>Texto de Whisper tiny local.</td></tr>
-<tr><td>01 wer jiwer punto py</td><td>Referencia e hipótesis.</td><td>WER y regla de revisión.</td></tr>
-</table>
+| Archivo | Entrada | Salida |
+|---|---|---|
+| [00_asr_local.py](00_asr_local.py) | Audio WAV. | Texto de Whisper tiny local. |
+| [01_wer_jiwer.py](01_wer_jiwer.py) | Referencia e hipótesis. | WER y regla de revisión. |
+
+Guías: [ASR local](00_asr_local.md) y [WER con JiWER](01_wer_jiwer.md).
 
 ## Código ASR
 
@@ -44,15 +45,13 @@ print("Revisión humana:", error > umbral)
 
 ## Comparación local y remoto
 
-<table>
-<tr><th>Aspecto</th><th>Local</th><th>Remoto</th></tr>
-<tr><td>Privacidad</td><td>Audio permanece en la máquina.</td><td>Audio viaja al proveedor.</td></tr>
-<tr><td>Configuración</td><td>Descarga de modelo y CPU o GPU.</td><td>Clave y conexión.</td></tr>
-<tr><td>Latencia</td><td>Depende del equipo.</td><td>Depende de red y servicio.</td></tr>
-<tr><td>Costo por uso</td><td>Infraestructura propia.</td><td>Uso de API.</td></tr>
-</table>
+| Aspecto | Local | Remoto |
+|---|---|---|
+| Privacidad | Audio permanece en la máquina. | Audio viaja al proveedor. |
+| Configuración | Descarga de modelo y CPU o GPU. | Clave y conexión. |
+| Latencia | Depende del equipo. | Depende de red y servicio. |
+| Costo por uso | Infraestructura propia. | Uso de API. |
 
 ## Práctica
 
 Ejecutá audio limpio y luego audio ruidoso. Compará las palabras erróneas, el WER y la decisión de revisión.
-

@@ -14,10 +14,11 @@ flowchart TD
 
 ## Archivo de este tema
 
-<table>
-<tr><th>Archivo</th><th>Qué muestra</th><th>Por qué importa</th></tr>
-<tr><td>00 calcular wer punto py</td><td>La matriz de inserciones, deleciones y sustituciones.</td><td>Hace visible la matemática que una librería automatiza.</td></tr>
-</table>
+| Archivo | Qué muestra | Por qué importa |
+|---|---|---|
+| [00_calcular_wer.py](00_calcular_wer.py) | Matriz de inserciones, deleciones y sustituciones. | Hace visible la matemática que una librería automatiza. |
+
+La guía de código y teoría está en [00_calcular_wer.md](00_calcular_wer.md).
 
 ## Fórmula
 
@@ -46,12 +47,11 @@ Las tres opciones representan borrar, insertar o sustituir una palabra. La últi
 
 ## Tabla de interpretación
 
-<table>
-<tr><th>Resultado</th><th>Lectura</th><th>Acción siguiente</th></tr>
-<tr><td>WER igual a 0</td><td>Coincidencia exacta.</td><td>Revisar si la referencia es suficiente.</td></tr>
-<tr><td>WER bajo</td><td>Pocos errores globales.</td><td>Buscar términos críticos.</td></tr>
-<tr><td>WER alto</td><td>Calidad baja.</td><td>Revisar audio, modelo o pedir repetición.</td></tr>
-</table>
+| Resultado | Lectura | Acción siguiente |
+|---|---|---|
+| WER igual a 0 | Coincidencia exacta. | Revisar si la referencia es suficiente. |
+| WER bajo | Pocos errores globales. | Buscar términos críticos. |
+| WER alto | Calidad baja. | Revisar audio, modelo o pedir repetición. |
 
 ## Práctica
 
@@ -60,4 +60,3 @@ Eliminá una palabra de la hipótesis y después cambiá una palabra. Compará d
 ## Límite de la métrica
 
 WER cuenta palabras, no riesgo. “Ocho” por “dos” puede producir un WER bajo y un impacto alto.
-

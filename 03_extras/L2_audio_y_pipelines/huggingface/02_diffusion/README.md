@@ -14,21 +14,21 @@ flowchart LR
 
 ## Archivos de este tema
 
-<table>
-<tr><th>Archivo</th><th>Concepto</th><th>Resultado</th></tr>
-<tr><td>00 transformer vs diffusion punto py</td><td>Elección de arquitectura.</td><td>Tarea asociada a familia de modelo.</td></tr>
-<tr><td>01 scheduler punto py</td><td>Paso de ruido en difusión.</td><td>Audio limpio y audio ruidoso simulados.</td></tr>
-</table>
+| Archivo | Concepto | Resultado |
+|---|---|---|
+| [00_transformer_vs_diffusion.py](00_transformer_vs_diffusion.py) | Elección de arquitectura. | Tarea asociada a familia de modelo. |
+| [01_scheduler.py](01_scheduler.py) | Paso de ruido en difusión. | Señal limpia y señal ruidosa simuladas. |
+
+Guías: [Transformer y difusión](00_transformer_vs_diffusion.md) y [scheduler](01_scheduler.md).
 
 ## Regla de selección
 
-<table>
-<tr><th>Tarea</th><th>Familia inicial</th><th>Por qué</th></tr>
-<tr><td>Transcribir llamada</td><td>Transformer.</td><td>Comprende secuencia de voz a texto.</td></tr>
-<tr><td>Clasificar intención</td><td>Transformer.</td><td>Interpreta contexto textual.</td></tr>
-<tr><td>Generar sonido</td><td>Difusión.</td><td>Refina una señal desde ruido.</td></tr>
-<tr><td>Restaurar audio</td><td>Difusión.</td><td>Puede modelar detalle acústico.</td></tr>
-</table>
+| Tarea | Familia inicial | Por qué |
+|---|---|---|
+| Transcribir llamada | Transformer. | Comprende secuencia de voz a texto. |
+| Clasificar intención | Transformer. | Interpreta contexto textual. |
+| Generar sonido | Difusión. | Refina una señal desde ruido. |
+| Restaurar audio | Difusión. | Puede modelar detalle acústico. |
 
 ## Código del scheduler
 
@@ -43,4 +43,3 @@ El scheduler define cuánto ruido se mezcla en cada instante. La red aprende a p
 ## Práctica
 
 Probá instante 10, 50 y 90. Compará media y forma del tensor. Explicá por qué más pasos suelen dar mayor calidad y también mayor latencia.
-

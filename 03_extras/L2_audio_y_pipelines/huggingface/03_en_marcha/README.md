@@ -15,10 +15,11 @@ flowchart LR
 
 ## Archivo de este tema
 
-<table>
-<tr><th>Archivo</th><th>Pipeline</th><th>Concepto integrador</th></tr>
-<tr><td>pipeline audio local punto py</td><td>Audio a texto a WER.</td><td>Privacidad, latencia local y evaluación.</td></tr>
-</table>
+| Archivo | Pipeline | Concepto integrador |
+|---|---|---|
+| [pipeline_audio_local.py](pipeline_audio_local.py) | Audio a texto a WER. | Privacidad, latencia local y evaluación. |
+
+La guía de código y teoría está en [pipeline_audio_local.md](pipeline_audio_local.md).
 
 ## Código central
 
@@ -32,14 +33,12 @@ La normalización lower permite que diferencias de mayúsculas no dominen la mé
 
 ## Tabla de decisión
 
-<table>
-<tr><th>Resultado</th><th>Lectura</th><th>Siguiente paso</th></tr>
-<tr><td>WER bajo</td><td>Texto cercano a referencia.</td><td>Revisar términos críticos y continuar.</td></tr>
-<tr><td>WER medio</td><td>Hay dudas.</td><td>Mostrar evidencia y pedir revisión.</td></tr>
-<tr><td>WER alto</td><td>ASR no es confiable.</td><td>Mejorar audio o usar otro modelo.</td></tr>
-</table>
+| Resultado | Lectura | Siguiente paso |
+|---|---|---|
+| WER bajo | Texto cercano a referencia. | Revisar términos críticos y continuar. |
+| WER medio | Hay dudas. | Mostrar evidencia y pedir revisión. |
+| WER alto | ASR no es confiable. | Mejorar audio o usar otro modelo. |
 
 ## Práctica
 
 Cambiá de whisper tiny a whisper base. Registrá tiempo, memoria, WER y calidad cualitativa. Esa tabla es la base de una decisión de arquitectura.
-

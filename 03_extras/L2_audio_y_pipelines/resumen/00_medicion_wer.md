@@ -96,4 +96,61 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este primer caso separa intencionalmente dos preguntas que en clase suelen mezclarse: **qué tan distinta es una transcripción** y **cómo se explica esa diferencia a una persona**. JiWER responde lo primero; LangChain solo redacta la segunda parte.
+
+```mermaid
+flowchart LR
+    A[Referencia humana] --> C[jiwer.wer]
+    B[Hipótesis ASR] --> C
+    C --> D[Error numérico]
+    D --> E[LangChain explica]
+    E --> F[Salida visible]
+```
+
+### 1. Configuración compartida
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+```
+
+El script carga `.env` antes de crear `ChatOpenAI`. En este caso JiWER funciona sin claves; LangChain sí necesita una credencial. Esto permite mostrar que no todas las piezas del pipeline dependen de un proveedor externo.
+
+### 2. Referencia e hipótesis
+
+```python
+referencia = "tomar un comprimido cada ocho horas"
+transcripcion = "tomar un comprimido cada ocho horas"
+```
+
+Ambas cadenas son iguales para que la salida inicial sea WER `0.0`. La referencia representa lo que una persona verificó; `transcripcion` representa lo que habría devuelto ASR. Cambiar solo una palabra permite aislar el efecto de una sustitución.
+
+### 3. La métrica ocurre antes del LLM
+
+```python
+error_wer = wer(referencia, transcripcion)
+```
+
+La fórmula es `WER = (S + D + I) / N`: sustituciones, eliminaciones e inserciones divididas por palabras de referencia. El LLM no participa aquí, por lo que el número es repetible para el mismo par de textos.
+
+| Bloque | Input | Output | Riesgo si se omite |
+|---|---|---|---|
+| Referencia | Texto humano | Patrón medible | No hay evaluación objetiva. |
+| `wer` | Referencia + hipótesis | Distancia normalizada | Se confunde fluidez con calidad. |
+| LangChain | Valor ya calculado | Explicación en lenguaje natural | Puede explicar mal, pero no altera WER. |
+
+### 4. LangChain interpreta, no recalcula
+
+La instrucción incluye `WER={error_wer}`. `ChatOpenAI(...).invoke(...)` devuelve un mensaje y `.content` extrae su texto. El resultado es útil para una interfaz o informe, pero el dato fuente sigue siendo `error_wer`.
+
+### Discusión docente
+
+Un WER de 0 no prueba que una orden sea segura: la referencia podría estar mal o el audio podría pertenecer a otro paciente. Un WER bajo tampoco pesa los daños: “ocho” por “dos” es una sola sustitución y puede ser crítica. El próximo caso agrega estructura para que otro sistema no reciba un párrafo ambiguo.
+
+| Cambio experimental | WER esperado | Pregunta |
+|---|---:|---|
+| Cambiar `comprimido` por `cápsula` | Mayor que 0 | ¿Es un error de palabra o de significado? |
+| Quitar `ocho` | Mayor que 0 | ¿Qué tipo de operación cuenta? |
+| Agregar una palabra | Mayor que 0 | ¿Por qué WER puede crecer aun si se conserva la frase? |

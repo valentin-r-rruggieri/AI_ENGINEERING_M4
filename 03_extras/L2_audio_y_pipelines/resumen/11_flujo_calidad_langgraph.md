@@ -145,4 +145,92 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este es el integrador más completo de L2: transforma una llamada ruidosa en texto, mide WER y toma una decisión estructurada. Cada etapa aparece como nodo para que se pueda auditar qué dato originó la decisión final.
+
+```mermaid
+flowchart LR
+    A[Estado inicial: archivo + referencia] --> B[transcribir_llamada]
+    B --> C[Estado: + transcripción]
+    C --> D[medir_calidad]
+    D --> E[Estado: + WER]
+    E --> F[decidir_destino]
+    F --> G[DecisionLlamada]
+```
+
+### 1. Distinguir estado de negocio y resultado final
+
+```python
+class EstadoLlamada(TypedDict):
+    archivo: str
+    referencia: str
+    transcripcion: NotRequired[str]
+    wer: NotRequired[float]
+    decision: NotRequired[dict[str, object]]
+```
+
+El estado es la bitácora del pipeline. Arranca con el audio y la referencia; cada nodo agrega evidencia. `DecisionLlamada` es diferente: contiene solamente lo que una operación de soporte necesita consumir (`wer`, `destino`, `motivo`).
+
+### 2. Nodo uno: convertir bytes en texto
+
+```python
+def transcribir_llamada(state):
+    with (... / state["archivo"]).open("rb") as archivo_audio:
+        respuesta_asr = cliente_audio.audio.transcriptions.create(...)
+    return {"transcripcion": str(respuesta_asr.text)}
+```
+
+El nodo utiliza solo `archivo`, conserva la referencia sin tocar y agrega una transcripción. Si falla ASR, el flujo no debería inventar una decisión: se debe registrar el error y detenerse o derivar a revisión.
+
+### 3. Nodo dos: medir objetivamente
+
+```python
+error_wer = round(wer(state["referencia"].lower(), state["transcripcion"].lower()), 3)
+return {"wer": error_wer}
+```
+
+El cálculo ocurre antes del LLM. Minúsculas reducen diferencias de estilo; no corrigen contenido. El nodo devuelve únicamente `wer`, permitiendo comparar qué decisión surgiría con el mismo texto y otro umbral.
+
+### 4. Nodo tres: convertir evidencia en destino
+
+El prompt recibe WER **y** transcripción. Además impone una política: si WER es mayor que `0.15`, elegir revisión o nuevo audio; si no, procesar soporte. `with_structured_output(DecisionLlamada)` exige una respuesta con tres campos, y `model_validate` confirma el contrato antes de actualizar estado.
+
+| Nodo | Input de estado | Output de actualización | Razón de existir separado |
+|---|---|---|---|
+| `transcribir_llamada` | `archivo` | `transcripcion` | ASR no decide negocio. |
+| `medir_calidad` | Referencia + transcripción | `wer` | La métrica es reproducible y no generativa. |
+| `decidir_destino` | WER + transcripción | `decision` | La explicación contextual llega después de medir. |
+
+### 5. Aristas = orden auditable
+
+```python
+START → transcribir_llamada → medir_calidad → decidir_destino → END
+```
+
+Las aristas prohiben que el LLM decida antes de conocer WER. Esa propiedad importa más que la cantidad de nodos: el flujo expresa una política de seguridad que se puede leer, probar y modificar.
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant G as Grafo
+    participant A as ASR
+    participant M as JiWER
+    participant L as LangChain
+    U->>G: archivo ruidoso + referencia
+    G->>A: transcribir
+    A-->>G: texto
+    G->>M: referencia + texto
+    M-->>G: WER
+    G->>L: texto + WER + regla
+    L-->>G: destino estructurado
+    G-->>U: decisión validada
+```
+
+## Prueba didáctica recomendada
+
+Ejecutá con `llamada_soporte.wav` y luego con `llamada_soporte_ruido.wav`. Compará los tres niveles de evidencia: transcripción, WER y motivo. Si la decisión cambia, verificá que cambió por la métrica o por el contenido, no porque el agente “pareció más seguro”.
+
+## Límite profesional
+
+WER no detecta por sí solo términos de negocio críticos. Una versión de producción debe combinar este grafo con el auditor del caso 08, manejo de errores de red, trazabilidad de modelo y revisión humana para casos sensibles.

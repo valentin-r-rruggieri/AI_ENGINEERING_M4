@@ -16,10 +16,11 @@ flowchart LR
 
 ## Archivo de este tema
 
-<table>
-<tr><th>Archivo</th><th>Etapas</th><th>Resultado</th></tr>
-<tr><td>pipeline audio punto py</td><td>Audio a texto, texto a resumen, texto contra referencia.</td><td>Transcripción, resumen y WER.</td></tr>
-</table>
+| Archivo | Etapas | Resultado |
+|---|---|---|
+| [pipeline_audio.py](pipeline_audio.py) | Audio a texto, texto a resumen, texto contra referencia. | Transcripción, resumen y WER. |
+
+La guía de código y teoría está en [pipeline_audio.md](pipeline_audio.md).
 
 ## Lectura del flujo
 
@@ -33,12 +34,11 @@ El orden importa. Primero se obtiene evidencia ASR, después se genera el resume
 
 ## Tabla de fallas
 
-<table>
-<tr><th>Falla observada</th><th>Causa probable</th><th>Qué no hacer</th></tr>
-<tr><td>Resumen incorrecto</td><td>ASR entendió mal el audio.</td><td>Cambiar el prompt sin revisar el texto.</td></tr>
-<tr><td>WER alto</td><td>Ruido, cortes o referencia distinta.</td><td>Automatizar sin revisión.</td></tr>
-<tr><td>Texto correcto y resumen pobre</td><td>Prompt o modelo LLM.</td><td>Culpar a Whisper automáticamente.</td></tr>
-</table>
+| Falla observada | Causa probable | Qué no hacer |
+|---|---|---|
+| Resumen incorrecto | ASR entendió mal el audio. | Cambiar el prompt sin revisar el texto. |
+| WER alto | Ruido, cortes o referencia distinta. | Automatizar sin revisión. |
+| Texto correcto y resumen pobre | Prompt o modelo LLM. | Culpar a Whisper automáticamente. |
 
 ## Extensión
 
@@ -50,4 +50,3 @@ si WER <= 0.15, mostrar resumen y conservar transcripción
 ~~~
 
 El umbral debe justificarse con golden cases del dominio.
-

@@ -140,4 +140,73 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este caso ataca el límite más importante de WER: todos los errores cuentan igual, pero no todos tienen el mismo impacto. Cambiar “ocho horas” por “dos horas” genera una sola diferencia de palabras y puede ser una situación grave.
+
+```mermaid
+flowchart TD
+    A[Referencia] --> C[WER global]
+    B[Transcripción] --> C
+    A --> D[Lista de términos críticos]
+    B --> D
+    C --> E[Auditor LangChain]
+    D --> E
+    E --> F[AuditoriaAudio validada]
+```
+
+### 1. Un schema con decisiones acotadas
+
+```python
+class AuditoriaAudio(BaseModel):
+    wer: float = Field(ge=0)
+    terminos_criticos_afectados: list[str]
+    nivel_riesgo: Literal["bajo", "medio", "alto"]
+    accion: Literal["continuar", "revisar_transcripcion", "pedir_audio_nuevo"]
+    motivo: str = Field(min_length=15)
+```
+
+`Literal` reduce respuestas vagas: el modelo debe escoger categorías permitidas. `motivo` exige una explicación de al menos 15 caracteres para que no se limite a “hay riesgo”. El modelo de datos convierte una conversación libre en una salida operacional.
+
+### 2. Definir explícitamente aquello que no puede fallar
+
+```python
+terminos_criticos = ["ocho horas", "cinco días", "comprimido"]
+afectados = [termino for termino in terminos_criticos if termino not in transcripcion.lower()]
+```
+
+La lista es una regla de dominio, no una predicción automática. Busca cada término esperado dentro de la hipótesis. Es una versión muy simple que enseña la idea; una producción debería normalizar variantes, entidades numéricas y contexto para evitar falsos positivos.
+
+### 3. Medir primero, razonar después
+
+```python
+error_wer = round(wer(referencia.lower(), transcripcion.lower()), 3)
+```
+
+Las dos cadenas se pasan a minúsculas para ignorar estilo. El número queda calculado por JiWER antes de invocar el LLM. Después el prompt entrega referencia, hipótesis, WER y términos faltantes para que el auditor justifique una decisión basada en evidencia.
+
+| Evidencia | Cómo se calcula | Aporte |
+|---|---|---|
+| WER | Distancia de palabras | Calidad global. |
+| `afectados` | Lista de términos ausentes | Riesgo específico de dominio. |
+| Referencia + hipótesis | Texto completo | Contexto para explicar. |
+| Schema | Pydantic | Forma consistente de decisión. |
+
+### 4. El auditor tiene una prohibición clara
+
+El prompt dice “No des consejos médicos” y “Si cambia una frecuencia, elegí revisión”. El modelo no debe modificar la indicación ni elegir tratamiento: su rol es detener la automatización si la fuente es insegura.
+
+### 5. Validación final
+
+`AuditoriaAudio.model_validate(resultado)` hace explícito que ningún objeto se imprime o reenvía sin pasar por el contrato. Si el modelo devuelve una acción no permitida, el error se ve inmediatamente en lugar de propagarse.
+
+## Debate docente
+
+| Situación | WER posible | Acción prudente |
+|---|---:|---|
+| Falta una coma | Bajo o cero | Revisar regla de normalización. |
+| `ocho` por `dos` | Bajo | Revisar transcripción, riesgo alto. |
+| Audio incomprensible completo | Alto | Pedir nuevo audio. |
+| Palabra no crítica equivocada | Bajo | Depende de política y contexto. |
+
+La combinación “métrica + términos críticos + schema” es más fuerte que cualquiera de las tres piezas aisladas.

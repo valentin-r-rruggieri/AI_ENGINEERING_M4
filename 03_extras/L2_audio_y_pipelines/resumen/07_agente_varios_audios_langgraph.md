@@ -79,4 +79,78 @@ flowchart LR
 WER = (S + D + I) / N
 La decisión final debe combinar métrica, contexto y política de riesgo.
 ~~~
+## Explicación profunda del caso
 
+Este archivo usa los mismos tres escenarios del caso 06, pero muestra el handoff como un grafo. La diferencia importante no es “usar otra librería”: cada nodo tiene una responsabilidad y el estado deja evidencia de lo que sucedió entre pasos.
+
+```mermaid
+flowchart LR
+    A[Estado inicial: archivo + descripción] --> B[transcribir_audio]
+    B --> C[Estado: + transcripción]
+    C --> D[clasificar_audio]
+    D --> E[Estado: + ficha Pydantic]
+```
+
+### 1. Estado evolutivo del flujo
+
+```python
+class EstadoAudio(TypedDict):
+    archivo: str
+    descripcion: str
+    transcripcion: NotRequired[str]
+    ficha: NotRequired[dict[str, object]]
+```
+
+`archivo` y `descripcion` son obligatorios al inicio. `transcripcion` aparece después del primer nodo; `ficha`, después del segundo. Esta forma permite inspeccionar el resultado final y entender qué nodo agregó cada campo.
+
+### 2. Tipos de actualización reducen ambigüedad
+
+```python
+class ActualizacionTranscripcion(TypedDict):
+    transcripcion: str
+
+class ActualizacionFicha(TypedDict):
+    ficha: dict[str, object]
+```
+
+Los nodos no deberían devolver estados completos copiados. Devuelven solo la actualización que producen. Esto hace más fácil detectar si un nodo inesperadamente cambia un dato de entrada.
+
+### 3. Nodo de ASR
+
+```python
+def transcribir_audio(state: EstadoAudio) -> ActualizacionTranscripcion:
+    ruta_audio = carpeta_datos / state["archivo"]
+    ...
+    return {"transcripcion": str(respuesta_asr.text)}
+```
+
+Recibe solo el estado, resuelve la ruta, abre bytes y devuelve texto. No sabe cómo clasificar calidad ni decide la acción. Es una separación de responsabilidades deliberada.
+
+### 4. Nodo de interpretación estructurada
+
+`clasificar_audio` toma `archivo`, `descripcion` y `transcripcion`. Con `with_structured_output(FichaAudio)` produce un objeto validable. El texto se obtiene mediante `state.get('transcripcion', '')`: es una defensa de lectura, aunque por la secuencia del grafo el campo debería existir.
+
+| Nodo | Lee del estado | Agrega | No debería hacer |
+|---|---|---|---|
+| `transcribir_audio` | `archivo` | `transcripcion` | Clasificar, resumir o decidir negocio. |
+| `clasificar_audio` | Archivo, descripción, transcripción | `ficha` | Volver a enviar audio a ASR. |
+
+### 5. Conexiones y ejecución repetida
+
+```python
+grafo.add_edge(START, "transcribir_audio")
+grafo.add_edge("transcribir_audio", "clasificar_audio")
+grafo.add_edge("clasificar_audio", END)
+```
+
+La cadena de aristas define el orden. `aplicacion = grafo.compile()` valida y prepara el grafo; `aplicacion.invoke(entrada)` lo ejecuta una vez por caso. `cast(EstadoAudio, ...)` sirve al analizador de tipos para declarar el estado esperado al final.
+
+## Qué mirar en clase
+
+1. Mostrá el estado inicial: aún no hay texto ni ficha.
+2. Explicá que el primer nodo agrega transcripción real.
+3. Mostrá que el segundo nodo recibe exactamente esa transcripción.
+4. Compará la ficha de los tres escenarios.
+5. Preguntá qué nodo sumarías para calcular WER antes de clasificar.
+
+El caso 11 responde esa última pregunta y agrega una métrica objetiva entre ASR y la decisión.

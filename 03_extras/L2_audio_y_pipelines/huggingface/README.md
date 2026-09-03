@@ -18,3 +18,13 @@ modelos pequeños desde Hugging Face Hub la primera vez.
 | Integrador local | [03 en marcha](03_en_marcha/README.md) | Pipeline local de audio |
 
 Cada guía incluye teoría, gráficos Mermaid, tablas, código y experimentos.
+# Hugging Face para audio
+
+Ejercicios locales para entender datos, tokenizadores, ASR, evaluación y difusión.
+
+| Bloque | Guías por archivo |
+|---|---|
+| Datos y tokenizadores | [Dataset local](00_datos_tokenizers/00_dataset_local.md) · [BPE y WordPiece](00_datos_tokenizers/01_bpe_wordpiece.md) |
+| Audio | [ASR local](01_audio/00_asr_local.md) · [WER con JiWER](01_audio/01_wer_jiwer.md) |
+| Difusión | [Transformer vs difusión](02_diffusion/00_transformer_vs_diffusion.md) · [Scheduler](02_diffusion/01_scheduler.md) |
+| Integrador | [Pipeline local](03_en_marcha/pipeline_audio_local.md) |
