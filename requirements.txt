@@ -25,7 +25,12 @@ peft==0.13.2
 
 fastapi
 uvicorn[standard]
-mcp[cli]>=2
+# FastMCP 3 usa el SDK MCP 1.x; ambas herramientas se instalan juntas.
+mcp[cli]>=1.24,<2
+# FastMCP simplifica la creación y el consumo de servidores MCP reales.
+fastmcp>=3,<4
+# Cliente HTTP explícito para los MCP que conectan APIs externas o propias.
+httpx>=0.28
 langchain>=1
 langchain-openai
 langchain-google-genai

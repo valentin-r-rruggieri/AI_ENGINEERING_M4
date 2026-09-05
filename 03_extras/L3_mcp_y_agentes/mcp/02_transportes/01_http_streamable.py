@@ -9,11 +9,11 @@ DIFERENCIA: Streamable HTTP abre un endpoint; STDIO usa un subproceso local.
 EN CLASE: ejecutar uvicorn y conectar al endpoint /mcp.
 """
 
-# Importa MCPServer para construir el servidor HTTP.
-from mcp.server import MCPServer
+# Importa FastMCP para construir el servidor HTTP.
+from fastmcp import FastMCP
 
 # Declara una tool de solo lectura.
-mcp = MCPServer("Contratos HTTP")
+mcp = FastMCP("Contratos HTTP")
 
 # Expone una consulta pequeña para probar el transporte.
 @mcp.tool()
@@ -22,7 +22,7 @@ def estado_contrato(identificador: str) -> dict[str, str]:
     return {"identificador": identificador, "estado": "vigente"}
 
 # Convierte el servidor en una aplicación ASGI con endpoint /mcp.
-app = mcp.streamable_http_app()
+app = mcp.http_app(path="/mcp", transport="streamable-http")
 
 # Muestra la instrucción solo al ejecutar el archivo directamente con Python.
 print("Ejecutá: uvicorn 01_http_streamable:app --reload")

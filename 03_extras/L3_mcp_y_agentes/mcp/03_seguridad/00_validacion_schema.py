@@ -13,11 +13,11 @@ EN CLASE: comprobar que la función no recibe valores fuera del contrato.
 from typing import Annotated, Literal
 from pydantic import Field
 
-# Importa el servidor MCP oficial.
-from mcp.server import MCPServer
+# Importa FastMCP para publicar el schema generado desde la firma.
+from fastmcp import FastMCP
 
 # Crea un servidor con una tool validada.
-mcp = MCPServer("Validación")
+mcp = FastMCP("Validación")
 
 # Restringe cantidad, prioridad y descripción desde la firma.
 @mcp.tool()

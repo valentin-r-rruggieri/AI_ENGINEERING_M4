@@ -9,13 +9,13 @@ DIFERENCIA: cada primitiva conserva una responsabilidad distinta.
 EN CLASE: probar las tres primitivas con Inspector antes de integrar un agente.
 """
 
-# Importa Annotated, MCPServer y Field para capacidades tipadas.
+# Importa Annotated, FastMCP y Field para capacidades tipadas.
 from typing import Annotated
-from mcp.server import MCPServer
+from fastmcp import FastMCP
 from pydantic import Field
 
 # Crea el servidor integrador.
-mcp = MCPServer("LegalMove MCP")
+mcp = FastMCP("LegalMove MCP")
 
 # Publica una tool de comparación determinista.
 @mcp.tool()
@@ -40,7 +40,7 @@ def auditar_cambio(jurisdiccion: str) -> str:
     return f"Audita el cambio contractual para la jurisdicción {jurisdiccion}."
 
 # Expone las capacidades mediante Streamable HTTP en /mcp.
-app = mcp.streamable_http_app()
+app = mcp.http_app(path="/mcp", transport="streamable-http")
 print("Ejecutá: uvicorn servidor_completo:app --reload")
 
 # Resumen final: este servidor reúne las tres primitivas de MCP.

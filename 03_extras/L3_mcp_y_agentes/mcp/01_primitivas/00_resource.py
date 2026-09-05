@@ -9,13 +9,12 @@ DIFERENCIA: una resource aporta contexto; una tool ejecuta una acción.
 EN CLASE: relacionar URI, parámetro y contenido devuelto.
 """
 
-# Importa asyncio, Client y MCPServer para registrar y leer el recurso.
+# Importa asyncio, Client y FastMCP para registrar y leer el recurso.
 import asyncio
-from mcp import Client
-from mcp.server import MCPServer
+from fastmcp import Client, FastMCP
 
 # Crea un servidor con un recurso parametrizado.
-mcp = MCPServer("Contratos")
+mcp = FastMCP("Contratos")
 
 # Publica datos de una cláusula mediante su identificador.
 @mcp.resource("contrato://clausula/{numero}")
@@ -27,7 +26,7 @@ def leer_clausula(numero: str) -> str:
 async def probar_resource() -> None:
     async with Client(mcp) as cliente:
         resultado = await cliente.read_resource("contrato://clausula/4")
-        print(resultado.contents[0].text)
+        print(resultado[0].text)
 
 # Ejecuta la demostración lineal.
 asyncio.run(probar_resource())

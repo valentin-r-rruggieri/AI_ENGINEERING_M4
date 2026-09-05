@@ -9,11 +9,11 @@ DIFERENCIA: crear el servidor no publica todavía ninguna tool ni abre un transp
 EN CLASE: distinguir host, client y server antes de agregar funciones.
 """
 
-# Importa MCPServer desde el SDK oficial v2.
-from mcp.server import MCPServer
+# Importa FastMCP, la interfaz actual y simple para crear servidores MCP.
+from fastmcp import FastMCP
 
 # Crea un servidor con un nombre reconocible para clientes e Inspector.
-mcp = MCPServer("AEM4 Demo")
+mcp = FastMCP("AEM4 Demo")
 
 # Muestra el objeto preparado sin iniciar un proceso bloqueante.
 print("Servidor creado:", type(mcp).__name__)

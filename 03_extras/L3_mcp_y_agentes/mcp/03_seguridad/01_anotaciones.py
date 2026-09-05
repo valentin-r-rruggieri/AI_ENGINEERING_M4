@@ -9,12 +9,12 @@ DIFERENCIA: las anotaciones orientan al cliente; no reemplazan autorización rea
 EN CLASE: discutir cuándo una interfaz debe pedir confirmación humana.
 """
 
-# Importa el servidor y las anotaciones estándar del protocolo.
-from mcp.server import MCPServer
+# Importa FastMCP y las anotaciones estándar del protocolo.
+from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
 # Crea el servidor que expone una consulta cerrada y de solo lectura.
-mcp = MCPServer("Seguridad")
+mcp = FastMCP("Seguridad")
 
 # Marca explícitamente la tool como no destructiva y de solo lectura.
 @mcp.tool(

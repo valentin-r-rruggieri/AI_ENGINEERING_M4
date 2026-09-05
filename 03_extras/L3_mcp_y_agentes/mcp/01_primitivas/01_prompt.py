@@ -9,13 +9,12 @@ DIFERENCIA: el prompt propone instrucciones; no ejecuta una acción por sí mism
 EN CLASE: diferenciar template del mensaje finalmente generado.
 """
 
-# Importa asyncio, Client y MCPServer para registrar y solicitar el prompt.
+# Importa asyncio, Client y FastMCP para registrar y solicitar el prompt.
 import asyncio
-from mcp import Client
-from mcp.server import MCPServer
+from fastmcp import Client, FastMCP
 
 # Crea el servidor de plantillas legales.
-mcp = MCPServer("Prompts legales")
+mcp = FastMCP("Prompts legales")
 
 # Registra un prompt que adapta la instrucción al tipo de contrato.
 @mcp.prompt()

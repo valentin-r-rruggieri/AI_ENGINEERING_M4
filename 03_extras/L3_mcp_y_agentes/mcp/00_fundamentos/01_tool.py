@@ -9,13 +9,12 @@ DIFERENCIA: la docstring describe la tool y los tipos forman su contrato.
 EN CLASE: inspeccionar nombre, argumentos y retorno antes de llamar.
 """
 
-# Importa asyncio para ejecutar el cliente y componentes MCP v2.
+# Importa asyncio para ejecutar el cliente y componentes MCP.
 import asyncio
-from mcp import Client
-from mcp.server import MCPServer
+from fastmcp import Client, FastMCP
 
 # Crea el servidor que expondrá el cálculo.
-mcp = MCPServer("Calculadora")
+mcp = FastMCP("Calculadora")
 
 # Registra una función Python como tool MCP.
 @mcp.tool()
@@ -27,7 +26,7 @@ def sumar(a: int, b: int) -> int:
 async def probar_tool() -> None:
     async with Client(mcp) as cliente:
         resultado = await cliente.call_tool("sumar", {"a": 2, "b": 3})
-        print(resultado.structured_content)
+        print(resultado.data)
 
 # Ejecuta la prueba directamente, sin bloque __main__.
 asyncio.run(probar_tool())

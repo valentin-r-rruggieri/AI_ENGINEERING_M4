@@ -1,0 +1,7 @@
+# La instalación normal se hace desde el requirements.txt de la raíz.
+# Este archivo documenta la dependencia específica de esta tecnología.
+fastmcp>=3,<4
+langchain>=1
+langchain-openai
+pydantic>=2
+python-dotenv

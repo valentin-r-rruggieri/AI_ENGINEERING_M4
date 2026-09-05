@@ -9,11 +9,11 @@ DIFERENCIA: STDIO no abre un puerto; usa entrada y salida estándar.
 EN CLASE: no imprimir mensajes extra porque contaminarían JSON-RPC.
 """
 
-# Importa MCPServer para declarar el servidor local.
-from mcp.server import MCPServer
+# Importa FastMCP para declarar el servidor local.
+from fastmcp import FastMCP
 
 # Crea un servidor con una tool determinista.
-mcp = MCPServer("Conversor STDIO")
+mcp = FastMCP("Conversor STDIO")
 
 # Expone una conversión simple con tipos que generan el schema.
 @mcp.tool()

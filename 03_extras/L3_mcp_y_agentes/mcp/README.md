@@ -1,7 +1,9 @@
 # MCP: tools, resources, prompts y transportes
 
-Este recorrido usa MCP Python SDK v2. Los ejemplos básicos prueban el protocolo en memoria;
-los últimos muestran STDIO y Streamable HTTP.
+Este recorrido usa FastMCP sobre el SDK MCP actual compatible. Los ejemplos básicos
+prueban las primitivas en memoria; los últimos muestran STDIO y Streamable HTTP.
+Para publicar y consumir un servidor por una conexión real, continuá con la
+carpeta hermana [`fastmcp`](../fastmcp/README.md).
 
 ```powershell
 pip install -r 03_extras/L3_mcp_y_agentes/mcp/requirements.txt
