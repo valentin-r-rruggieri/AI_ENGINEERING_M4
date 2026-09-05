@@ -20,8 +20,11 @@ flowchart LR
 |---|---|---|
 | [00_dataset_local.py](00_dataset_local.py) | Dataset desde CSV. | Filas, columnas y primer caso. |
 | [01_bpe_wordpiece.py](01_bpe_wordpiece.py) | Subwords. | Dos segmentaciones del mismo texto. |
+| [02_por_palabra.py](02_por_palabra.py) | Tokenización por palabra. | Palabras, vocabulario e IDs. |
+| [03_por_caracter.py](03_por_caracter.py) | Tokenización por carácter. | Caracteres e IDs. |
+| [04_subword_huggingface.py](04_subword_huggingface.py) | Subword WordPiece real. | Subtokens e IDs de Hugging Face. |
 
-Guías: [dataset local](00_dataset_local.md) y [BPE / WordPiece](01_bpe_wordpiece.md).
+Guías: [dataset local](00_dataset_local.md), [BPE / WordPiece](01_bpe_wordpiece.md), [por palabra](02_por_palabra.md), [por carácter](03_por_caracter.md) y [subword](04_subword_huggingface.md).
 
 ## Dataset
 

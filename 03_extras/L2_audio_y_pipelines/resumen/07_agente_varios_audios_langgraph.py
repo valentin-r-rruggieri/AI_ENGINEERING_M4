@@ -96,9 +96,8 @@ aplicacion = grafo.compile()
 
 # Repite tres casos contrastantes para comparar los estados finales del grafo.
 casos = [
-    ("llamada_soporte.wav", "llamada de soporte normal"),
-    ("indicacion_medica_ruido.wav", "indicación médica con ruido"),
-    ("reunion_equipo_rapido.wav", "reunión de equipo acelerada"),
+    ("llamada_soporte_mal_estado.wav", "llamada de soporte normal"),
+ 
 ]
 
 # Ejecuta el flujo completo una vez por archivo y muestra su contrato final.

@@ -24,7 +24,7 @@ Ejercicios locales para entender datos, tokenizadores, ASR, evaluación y difusi
 
 | Bloque | Guías por archivo |
 |---|---|
-| Datos y tokenizadores | [Dataset local](00_datos_tokenizers/00_dataset_local.md) · [BPE y WordPiece](00_datos_tokenizers/01_bpe_wordpiece.md) |
+| Datos y tokenizadores | [Dataset local](00_datos_tokenizers/00_dataset_local.md) · [BPE y WordPiece](00_datos_tokenizers/01_bpe_wordpiece.md) · [Palabra](00_datos_tokenizers/02_por_palabra.md) · [Carácter](00_datos_tokenizers/03_por_caracter.md) · [Subword](00_datos_tokenizers/04_subword_huggingface.md) |
 | Audio | [ASR local](01_audio/00_asr_local.md) · [WER con JiWER](01_audio/01_wer_jiwer.md) |
 | Difusión | [Transformer vs difusión](02_diffusion/00_transformer_vs_diffusion.md) · [Scheduler](02_diffusion/01_scheduler.md) |
 | Integrador | [Pipeline local](03_en_marcha/pipeline_audio_local.md) |

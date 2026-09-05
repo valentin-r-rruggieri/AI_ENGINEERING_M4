@@ -19,3 +19,13 @@ sobre una copia nueva del modelo base y realiza una inferencia de verificación.
 En este equipo, PyArrow está bloqueado por una política de Windows. Por eso el
 integrador final lee el CSV con `csv` y usa un bucle PyTorch: no requiere PyArrow
 y el entrenamiento LoRA sigue siendo real.
+# Hugging Face LoRA — De entrenamiento a adapter reutilizable
+
+| Orden | Guía |
+|---:|---|
+| 1 | [Trainer en CPU](00_entrenamiento/00_trainer_cpu.md) |
+| 2 | [LoRA / PEFT](00_entrenamiento/01_lora_peft.md) |
+| 3 | [Accuracy](01_evaluacion/00_accuracy.md) |
+| 4 | [Guardar adapter](01_evaluacion/01_guardar_adapter.md) |
+| 5 | [Entrenar y recargar](02_en_marcha/02_entrenar_y_recargar_lora_cpu.md) |
+| 6 | [Clasificador](02_en_marcha/clasificador_lora.md) |

@@ -7,3 +7,10 @@ python 03_extras/L4_transformers/huggingface/00_transformers/00_pipeline_clasifi
 
 Primero observá el pipeline de alto nivel, después inspeccioná los parámetros y terminá
 con el recorrido completo de tokenización e inferencia.
+# Hugging Face — De pipeline a recorrido explícito
+
+| Orden | Guía | Concepto |
+|---:|---|---|
+| 1 | [Pipeline de clasificación](00_transformers/00_pipeline_clasificacion.md) | Inferencia de alto nivel. |
+| 2 | [Inspeccionar modelo](00_transformers/01_inspeccionar_modelo.md) | Parámetros y costo de adaptación. |
+| 3 | [Recorrido Transformer](01_en_marcha/recorrido_transformer.md) | Tokens, tensores, logits y softmax. |
